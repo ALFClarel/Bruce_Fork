@@ -1,3 +1,4 @@
+#include "core/capture_metadata.h"
 /**
  * @file ir_read.cpp
  * @author @im.nix (https://github.com/Niximkk)
@@ -525,6 +526,9 @@ bool IrRead::write_file(String filename, FS *fs) {
     file.print(strDeviceContent);
 
     file.close();
+#ifdef BRUCE_TEMBED_BASE
+    annotateCapture(*fs, "/BruceIR/" + filename + ".ir");
+#endif
     delay(100);
     return true;
 }

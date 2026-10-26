@@ -1,3 +1,4 @@
+#include "core/capture_metadata.h"
 #include "core/powerSave.h"
 #include "rf_scan.h"
 #include "core/led_control.h"
@@ -764,7 +765,10 @@ bool rfSaveSignal(float frequency, RfCodes codes, bool raw, char *key, bool auto
     if (autoSave) filepath += "/autoSaved";
     File file = createNewFile(fs, filepath, filename);
 
+    String savedPath;
+    bool saved = bool(file);
     if (file) {
+        savedPath = file.path();
         file.println(subfile_out);
         if (!autoSave) displaySuccess(file.path());
     } else {
@@ -772,7 +776,11 @@ bool rfSaveSignal(float frequency, RfCodes codes, bool raw, char *key, bool auto
     }
 
     file.close();
-    return true;
+#ifdef BRUCE_TEMBED_BASE
+    if (saved) annotateCapture(*fs, savedPath, uint32_t(frequency * 1000000),
+                               raw ? String("RAW/unknown") : codes.protocol);
+#endif
+    return saved;
 }
 
 String rf_scan(float start_freq, float stop_freq, int max_loops) {

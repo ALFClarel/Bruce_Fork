@@ -1,3 +1,4 @@
+#include "core/capture_metadata.h"
 #include "save.h"
 bool rf_raw_save(RawRecording recorded) {
     FS *fs = nullptr;
@@ -70,6 +71,9 @@ bool rf_raw_save(RawRecording recorded) {
     }
 
     file.close();
+#ifdef BRUCE_TEMBED_BASE
+    annotateCapture(*fs, filename, uint32_t(recorded.frequency * 1000000), "RAW/unknown");
+#endif
     displaySuccess(filename, true);
     return true;
 }

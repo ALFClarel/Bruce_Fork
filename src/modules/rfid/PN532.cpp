@@ -1,3 +1,4 @@
+#include "core/capture_metadata.h"
 /**
  * @file PN532.cpp
  * @author Rennan Cockles (https://github.com/rennancockles) // Dawi (https://github.com/yourdawi)
@@ -936,8 +937,11 @@ int PN532::save(const String &filename) {
         file.println("Blocks read: " + String(dataPages));
     }
     file.print(strAllPages);
-
+    String savedPath = file.path();
     file.close();
+#ifdef BRUCE_TEMBED_BASE
+    annotateCapture(*fs, savedPath, 13560000, printableUID.picc_type);
+#endif
     delay(100);
     return SUCCESS;
 }

@@ -1,3 +1,4 @@
+#include "capture_metadata.h"
 #include "sd_functions.h"
 #include "bus_HAL.h"
 #include "display.h" // using displayRedStripe as error msg
@@ -951,7 +952,14 @@ String loopSD(FS &fs, bool filePicker, const String &allowed_ext, String rootPat
                     // generate qr codes from small files (<3K)
                     size_t filesize = getFileSize(fs, filepath);
                     // Serial.println(filesize);
+#ifdef BRUCE_TEMBED_BASE
+                    if (isCapturePath(filepath))
+                        options.push_back({"Filename QR", [&]() { qrcode_display(filepath); }});
+#endif
                     if (filesize < SAFE_STACK_BUFFER_SIZE && filesize > 0) {
+#ifdef BRUCE_TEMBED_BASE
+                        if (!isCapturePath(filepath))
+#endif
                         options.push_back({"QR code", [&]() {
                                                delay(200);
                                                qrcode_display(readSmallFile(fs, filepath));
@@ -1050,6 +1058,12 @@ bool getFsStorage(FS *&fs) {
 **  Display file info
 **********************************************************************/
 void fileInfo(FS &fs, const String &filepath) {
+#ifdef BRUCE_TEMBED_BASE
+    if (isCapturePath(filepath) && fs.exists(filepath + ".meta.json")) {
+        viewFile(fs, filepath + ".meta.json");
+        return;
+    }
+#endif
     File file = fs.open(filepath, FILE_READ);
     if (!file) return;
 
