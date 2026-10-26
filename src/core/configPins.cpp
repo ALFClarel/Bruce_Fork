@@ -540,6 +540,9 @@ void BruceConfigPins::setBleName(String value) {
 }
 
 void BruceConfigPins::setIrTxPin(int value) {
+#ifdef BRUCE_TEMBED_BASE
+    value = TXLED;
+#endif
     irTx = value;
     saveFile();
 }
@@ -550,16 +553,25 @@ void BruceConfigPins::setIrTxRepeats(uint8_t value) {
 }
 
 void BruceConfigPins::setIrRxPin(int value) {
+#ifdef BRUCE_TEMBED_BASE
+    value = RXLED;
+#endif
     irRx = value;
     saveFile();
 }
 
 void BruceConfigPins::setRfTxPin(int value) {
+#ifdef BRUCE_TEMBED_BASE
+    value = CC1101_GDO0_PIN;
+#endif
     rfTx = value;
     saveFile();
 }
 
 void BruceConfigPins::setRfRxPin(int value) {
+#ifdef BRUCE_TEMBED_BASE
+    value = CC1101_GDO0_PIN;
+#endif
     rfRx = value;
     saveFile();
 }
@@ -571,6 +583,10 @@ void BruceConfigPins::setRfModule(RFModules value) {
 }
 
 void BruceConfigPins::validateRfModuleValue() {
+#ifdef BRUCE_TEMBED_BASE
+    rfModule = CC1101_SPI_MODULE;
+    return;
+#endif
     if (rfModule != M5_RF_MODULE && rfModule != CC1101_SPI_MODULE) { rfModule = M5_RF_MODULE; }
 }
 

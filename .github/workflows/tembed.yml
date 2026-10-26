@@ -41,6 +41,7 @@ jobs:
         run: |
           if [ '${{ matrix.variant }}' = upstream ]; then
             git worktree add --detach /tmp/bruce-upstream a59213f3ec6cd302fa32c2042b2700c9c24d991a
+            python -c "from pathlib import Path; p=Path('/tmp/bruce-upstream/platformio.ini'); p.write_text(p.read_text().replace('FastLED @^3.10.3', 'FastLED @3.10.3'))"
             echo 'BUILD_SOURCE=/tmp/bruce-upstream' >> "$GITHUB_ENV"
           else
             echo "BUILD_SOURCE=$GITHUB_WORKSPACE" >> "$GITHUB_ENV"

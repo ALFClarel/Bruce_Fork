@@ -1,3 +1,5 @@
+> **T-Embed CC1101 base fork** — [audit, build, limitations and flash instructions](docs/tembed/REPORT.md). Validation status and measured sizes are available in [GitHub Actions](https://github.com/ALFClarel/Bruce_Fork/actions/workflows/tembed.yml).
+
 ![Bruce Main Menu](./media/pictures/bruce_banner.jpg)
 
 # :shark: Bruce
