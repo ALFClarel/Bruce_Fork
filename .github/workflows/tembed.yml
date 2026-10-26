@@ -1,0 +1,48 @@
+name: T-Embed CC1101 base
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: tembed-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Host compiler for native JS ROM generator
+        run: sudo apt-get update && sudo apt-get install -y gcc-multilib g++-multilib
+      - name: PlatformIO
+        run: python -m pip install platformio==6.1.19
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            .pio/libdeps
+          key: tembed-${{ runner.os }}-${{ hashFiles('platformio.ini', 'boards/lilygo-t-embed-cc1101/*.ini') }}
+      - name: Build the only supported target
+        run: |
+          set -o pipefail
+          python -m platformio run -e lilygo-t-embed-cc1101 2>&1 | tee build.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tembed-${{ github.sha }}
+          path: |
+            build.log
+            .pio/build/lilygo-t-embed-cc1101/firmware.elf
+            .pio/build/lilygo-t-embed-cc1101/firmware.bin
+            .pio/build/lilygo-t-embed-cc1101/bootloader.bin
+            .pio/build/lilygo-t-embed-cc1101/partitions.bin
+            Bruce-lilygo-t-embed-cc1101.bin
+          retention-days: 30
