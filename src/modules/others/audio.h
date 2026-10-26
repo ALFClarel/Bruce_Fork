@@ -1,3 +1,4 @@
+#pragma once
 #include <SPIFFS.h>
 // Keep SPIFFS first
 
@@ -31,7 +32,8 @@ bool playAudioFile(FS *fs, String filepath, PlaybackMode mode = PLAYBACK_BLOCKIN
 bool playAudioRTTTLString(String song, PlaybackMode mode = PLAYBACK_BLOCKING);
 bool tts(String text, PlaybackMode mode = PLAYBACK_BLOCKING);
 bool isAudioFile(const String &filePath);
-void playTone(unsigned int frequency, unsigned long duration = 0UL, short waveType = 0);
+void playTone(unsigned int frequency, unsigned long duration = 0UL, short waveType = 0,
+              PlaybackMode mode = PLAYBACK_BLOCKING);
 void _tone(unsigned int frequency, unsigned long duration = 0UL);
 
 // NEW: Async playback control API

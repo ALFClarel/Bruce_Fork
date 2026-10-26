@@ -654,7 +654,8 @@ bool isAudioFile(const String &filepath) {
            filepath.endsWith(".aac") || filepath.endsWith(".flac");
 }
 
-void playTone(unsigned int frequency, unsigned long duration, short waveType) {
+void playTone(unsigned int frequency, unsigned long duration, short waveType, PlaybackMode mode) {
+    if (mode == PLAYBACK_ASYNC && isAudioPlaying()) return;
     if (!bruceConfig.soundEnabled) return;
 
     _setup_codec_speaker(true);
@@ -716,6 +717,10 @@ void playTone(unsigned int frequency, unsigned long duration, short waveType) {
         return;
     }
 
+    if (mode == PLAYBACK_ASYNC) {
+        startAsyncPlayback(wav, file, out, "Tone"); // same cleanup/ownership as native file playback
+        return;
+    }
     while (wav->isRunning()) {
         if (!wav->loop() || check(AnyKeyPress)) { wav->stop(); }
         vTaskDelay(pdMS_TO_TICKS(1));

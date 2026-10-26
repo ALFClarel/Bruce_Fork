@@ -1,4 +1,6 @@
 #include "core/led_control.h"
+#include "modules/others/audio.h"
+#include <tembed_policy.h>
 #include "rf_spectrum.h"
 #include "protocols/rf_config.h"
 #include "protocols/rf_decoder.h"
@@ -186,7 +188,7 @@ PRINT:
     returnToMenu = true;
 }
 
-void rf_CC1101_rssi() {
+void rf_CC1101_rssi(bool foxHunt) {
 #ifdef BRUCE_TEMBED_BASE
     drainRotarySteps();
 #endif
@@ -195,6 +197,10 @@ void rf_CC1101_rssi() {
         displayError("only for CC1101 module", true);
         return;
     }
+    bool wasFixed = bruceConfigPins.rfFxdFreq;
+    if (foxHunt) bruceConfigPins.rfFxdFreq = true;
+    uint32_t lastBeep = 0;
+    bool ownTone = false;
     int graph_size = tftWidth - 20;
     std::vector<int> signal(graph_size, -95);
     const size_t freq_count = sizeof(subghz_frequency_list) / sizeof(float);
@@ -214,7 +220,8 @@ void rf_CC1101_rssi() {
             if (bruceConfigPins.rfFxdFreq) {
                 if (!initRfModule("rx", bruceConfigPins.rfFreq))
                     displayError("Error setting frequency", true);
-                tft.printf(" RF - RSSI spectrum (%.2f Mhz)", bruceConfigPins.rfFreq);
+                tft.printf(foxHunt ? " RF Fox Hunt (%.2f MHz)" : " RF - RSSI spectrum (%.2f MHz)",
+                           bruceConfigPins.rfFreq);
                 tft.drawFastVLine(20, 20, tftHeight, bruceConfig.priColor);
                 tft.drawString("-95", 0, (tftHeight - 120) + 95);
                 tft.drawString("-80", 0, (tftHeight - 120) + 80);
@@ -251,6 +258,17 @@ void rf_CC1101_rssi() {
         if (bruceConfigPins.rfFxdFreq) {
             int rssi = ELECHOUSE_cc1101.getRssi();
             signalMeter(rssi, -110, -25);
+#ifdef BRUCE_TEMBED_BASE
+            if (foxHunt && rssi > -105) {
+                uint8_t strength = tembed::signalPercent(rssi, -110, -25);
+                uint32_t interval = 1400 - strength * 12;
+                if (millis() - lastBeep >= interval && !isAudioPlaying()) {
+                    playTone(1200, 80, 0, PLAYBACK_ASYNC);
+                    ownTone = true;
+                    lastBeep = millis();
+                }
+            }
+#endif
             tft.drawPixel(0, 0, 0); // To make sure CC1101 shared with TFT works properly
             const int base_y = tftHeight - 120;
             int prev = signal[0];
@@ -313,6 +331,10 @@ void rf_CC1101_rssi() {
             redraw = true;
         }
     }
+#ifdef BRUCE_TEMBED_BASE
+    if (ownTone) stopAudioPlayback();
+#endif
+    bruceConfigPins.rfFxdFreq = wasFixed;
     deinitRfModule();
 #else
     displayError("Not available on Launcher version");
