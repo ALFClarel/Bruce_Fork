@@ -12,11 +12,13 @@
 #include "core/mykeyboard.h"
 #include "esp_task_wdt.h" //Include for Headless mode (long write trigger watchdog in JS)
 
-#if !defined(LITE_VERSION)
+#if !defined(LITE_VERSION) && !defined(BRUCE_PN532_ONLY)
 #include "ST25R3916.h"
 #endif
 #include "PN532.h"
+#if !defined(BRUCE_PN532_ONLY)
 #include "RFID2.h"
+#endif
 
 #define NDEF_DATA_SIZE 100
 #define SCAN_DUMP_SIZE 5
@@ -61,6 +63,9 @@ TagOMatic::~TagOMatic() {
 }
 
 void TagOMatic::set_rfid_module() {
+#ifdef BRUCE_PN532_ONLY
+    _rfid = new PN532(PN532::CONNECTION_TYPE::I2C);
+#else
     switch (bruceConfigPins.rfidModule) {
         case PN532_I2C_MODULE: _rfid = new PN532(PN532::CONNECTION_TYPE::I2C); break;
 #ifdef M5STICK
@@ -75,6 +80,7 @@ void TagOMatic::set_rfid_module() {
         case M5_RFID2_MODULE:
         default: _rfid = new RFID2(); break;
     }
+#endif
 }
 
 void TagOMatic::setup() {

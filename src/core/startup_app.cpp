@@ -13,12 +13,20 @@
 #include "core/wifi/webInterface.h"
 #include "core/wifi/wifi_common.h"
 #include "modules/bjs_interpreter/interpreter.h"
+#if !defined(BRUCE_NO_GPS)
 #include "modules/gps/gps_tracker.h"
+#endif
+#if !defined(BRUCE_NO_GPS)
 #include "modules/gps/wardriving.h"
+#endif
 #include "modules/pwnagotchi/pwnagotchi.h"
 #include "modules/rf/rf_send.h"
+#if !defined(BRUCE_NO_EXTERNAL_NFC)
 #include "modules/rfid/PN532KillerTools.h"
+#endif
+#if !defined(BRUCE_NO_EXTERNAL_NFC)
 #include "modules/rfid/pn532ble.h"
+#endif
 #include "modules/wifi/sniffer.h"
 #ifdef SOC_USB_OTG_SUPPORTED
 #include "core/massStorage.h"
@@ -28,19 +36,33 @@ StartupApp::StartupApp() {
 #ifndef LITE_VERSION
     _startupApps["Brucegotchi"] = []() { brucegotchi_start(); };
     _startupApps["Sniffer"] = []() { sniffer_setup(); };
+#ifndef BRUCE_NO_GPS
     _startupApps["GPS Tracker"] = []() { GPSTracker(); };
+#endif
+#ifndef BRUCE_NO_EXTERNAL_NFC
     _startupApps["PN532 BLE"] = []() { Pn532ble(); };
+#endif
+#ifndef BRUCE_NO_EXTERNAL_NFC
     _startupApps["PN532 UART"] = []() { PN532KillerTools(); };
+#endif
 #endif
     _startupApps["Clock"] = []() { runClockLoop(); };
     _startupApps["Custom SubGHz"] = []() { sendCustomRF(); };
 #if defined(SOC_USB_OTG_SUPPORTED)
     _startupApps["Mass Storage"] = []() { MassStorage(); };
 #endif
+#ifndef BRUCE_NO_GPS
     _startupApps["Wardriving"] = []() { Wardriving(true, true); };
+#endif
+#ifndef BRUCE_NO_GPS
     _startupApps["WardrivingNoRadio"] = []() { Wardriving(); };
+#endif
+#ifndef BRUCE_NO_GPS
     _startupApps["WardrivingBTEOnly"] = []() { Wardriving(false, true); };
+#endif
+#ifndef BRUCE_NO_GPS
     _startupApps["WardrivingWifiOnly"] = []() { Wardriving(true, false); };
+#endif
     _startupApps["WebUI"] = []() { startWebUi(!wifiConnecttoKnownNet()); };
 #if !defined(LITE_VERSION) && !defined(DISABLE_INTERPRETER)
     _startupApps["JS Interpreter"] = []() {

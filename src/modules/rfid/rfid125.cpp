@@ -1,3 +1,4 @@
+#if !defined(BRUCE_NO_LF_RFID)
 /**
  * @file rfid125.cpp
  * @author Rennan Cockles (https://github.com/rennancockles)
@@ -296,3 +297,5 @@ void RFID125::format_data() {
     _printable_checksum.trim();
     _printable_checksum.toUpperCase();
 }
+
+#endif

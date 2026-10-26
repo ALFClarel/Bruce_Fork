@@ -1,3 +1,4 @@
+#if !defined(BRUCE_NO_ETHERNET)
 /**
  * @file DHCPStarvation.cpp
  * @author Andrea Canale (https://github.com/andreock)
@@ -173,4 +174,6 @@ void DHCPStarvation::send_DHCP_packet() {
     // Send packet
     netif->linkoutput(netif, p);
 }
+#endif
+
 #endif

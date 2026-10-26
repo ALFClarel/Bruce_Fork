@@ -1,3 +1,4 @@
+#if !defined(BRUCE_NO_ETHERNET)
 #include "EthernetMenu.h"
 #if !defined(LITE_VERSION)
 #include "core/display.h"
@@ -112,4 +113,6 @@ void EthernetMenu::drawIcon(float scale) {
         tft.fillRect(px, y1 + t, pinW, pinH, bruceConfig.priColor);
     }
 }
+#endif
+
 #endif

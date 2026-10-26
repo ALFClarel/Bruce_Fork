@@ -1,3 +1,4 @@
+#if !defined(BRUCE_NO_GPS)
 /**
  * @file gps_tracker.cpp
  * @author Rennan Cockles (https://github.com/rennancockles)
@@ -285,3 +286,5 @@ void GPSTracker::restorePins() {
         rxPinReleased = false;
     }
 }
+
+#endif

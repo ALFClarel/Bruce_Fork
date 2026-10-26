@@ -109,18 +109,22 @@ void BruceConfigPins::fromJson(JsonObject obj) {
         log_e("Fail");
     }
 
+#ifndef BRUCE_TEMBED_BASE
     if (!root["iButton"].isNull()) {
         int val = root["iButton"].as<int>();
         if (val < GPIO_NUM_MAX) iButton = val;
         else log_w("iButton pin not set");
-    } else {
+    }
+#endif else {
         count++;
         log_e("Fail");
     }
 
+#ifndef BRUCE_TEMBED_BASE
     if (!root["gpsBaudrate"].isNull()) {
         gpsBaudrate = root["gpsBaudrate"].as<int>();
-    } else {
+    }
+#endif else {
         count++;
         log_e("Fail");
     }
@@ -137,6 +141,7 @@ void BruceConfigPins::fromJson(JsonObject obj) {
         log_e("Fail");
     }
 
+#ifndef BRUCE_NO_NRF24
     if (!root["NRF24_Pins"].isNull()) {
         SPIPins def = NRF24_bus;
         NRF24_bus.fromJson(root["NRF24_Pins"].as<JsonObject>());
@@ -144,7 +149,8 @@ void BruceConfigPins::fromJson(JsonObject obj) {
             NRF24_bus = def;
             count++;
         }
-    } else {
+    }
+#endif else {
         count++;
         log_e("Fail");
     }
@@ -172,13 +178,16 @@ void BruceConfigPins::fromJson(JsonObject obj) {
         log_e("Fail");
     }
 #if !defined(LITE_VERSION)
+#ifndef BRUCE_TEMBED_BASE
     if (!root["W5500_Pins"].isNull()) {
         W5500_bus.fromJson(root["W5500_Pins"].as<JsonObject>());
-    } else {
+    }
+#endif else {
         count++;
         log_e("Fail");
     }
 
+#ifndef BRUCE_TEMBED_BASE
     if (!root["LoRa_Pins"].isNull()) {
         SPIPins def = LoRa_bus;
         LoRa_bus.fromJson(root["LoRa_Pins"].as<JsonObject>());
@@ -186,11 +195,13 @@ void BruceConfigPins::fromJson(JsonObject obj) {
             LoRa_bus = def;
             count++;
         }
-    } else {
+    }
+#endif else {
         count++;
         log_e("Fail");
     }
 
+#ifndef BRUCE_TEMBED_BASE
     if (!root["ST25R_Pins"].isNull()) {
         SPIPins def = ST25R_bus;
         ST25R_bus.fromJson(root["ST25R_Pins"].as<JsonObject>());
@@ -198,7 +209,8 @@ void BruceConfigPins::fromJson(JsonObject obj) {
             ST25R_bus = def;
             count++;
         }
-    } else {
+    }
+#endif else {
         count++;
         log_e("Fail");
     }
@@ -229,9 +241,11 @@ void BruceConfigPins::fromJson(JsonObject obj) {
         count++;
         log_e("Fail");
     }
+#ifndef BRUCE_TEMBED_BASE
     if (!root["GPS_bus"].isNull()) {
         gps_bus.fromJson(root["GPS_bus"].as<JsonObject>());
-    } else {
+    }
+#endif else {
         count++;
         log_e("Fail");
     }
@@ -254,14 +268,20 @@ void BruceConfigPins::toJson(JsonObject obj) const {
     root["rfScanRange"] = rfScanRange;
     root["bleName"] = bleName;
     root["rfidModule"] = rfidModule;
+#ifndef BRUCE_TEMBED_BASE
     root["gpsBaudrate"] = gpsBaudrate;
+#endif
+#ifndef BRUCE_TEMBED_BASE
     root["iButton"] = iButton;
+#endif
 
     JsonObject _CC1101 = root["CC1101_Pins"].to<JsonObject>();
     CC1101_bus.toJson(_CC1101);
 
+#ifndef BRUCE_NO_NRF24
     JsonObject _NRF = root["NRF24_Pins"].to<JsonObject>();
     NRF24_bus.toJson(_NRF);
+#endif
 
     JsonObject _PN532 = root["PN532_Pins"].to<JsonObject>();
     PN532_bus.toJson(_PN532);
@@ -270,14 +290,20 @@ void BruceConfigPins::toJson(JsonObject obj) const {
     SDCARD_bus.toJson(_SD);
 
 #if !defined(LITE_VERSION)
+#ifndef BRUCE_TEMBED_BASE
     JsonObject _W5500 = root["W5500_Pins"].to<JsonObject>();
     W5500_bus.toJson(_W5500);
+#endif
 
+#ifndef BRUCE_TEMBED_BASE
     JsonObject _LoRa = root["LoRa_Pins"].to<JsonObject>();
     LoRa_bus.toJson(_LoRa);
+#endif
 
+#ifndef BRUCE_TEMBED_BASE
     JsonObject _ST25R = root["ST25R_Pins"].to<JsonObject>();
     ST25R_bus.toJson(_ST25R);
+#endif
 #endif
     JsonObject _si2c = root["sys_i2c"].as<JsonObject>();
     sys_i2c.toJson(_si2c);
@@ -285,8 +311,10 @@ void BruceConfigPins::toJson(JsonObject obj) const {
     i2c_bus.toJson(_di2c);
     JsonObject _uart = root["uart_bus"].to<JsonObject>();
     uart_bus.toJson(_uart);
+#ifndef BRUCE_TEMBED_BASE
     JsonObject _gps = root["GPS_bus"].to<JsonObject>();
     gps_bus.toJson(_gps);
+#endif
 }
 
 void BruceConfigPins::loadFile(JsonDocument &jsonDoc, bool checkFS) {
@@ -384,6 +412,18 @@ void BruceConfigPins::factoryReset() {
 }
 
 void BruceConfigPins::validateConfig() {
+#ifdef BRUCE_TEMBED_BASE
+    rfModule = CC1101_SPI_MODULE;
+    rfidModule = PN532_I2C_MODULE;
+    irRx = RXLED;
+    irTx = TXLED;
+    CC1101_bus = {(gpio_num_t)CC1101_SCK_PIN, (gpio_num_t)CC1101_MISO_PIN,
+                  (gpio_num_t)CC1101_MOSI_PIN, (gpio_num_t)CC1101_SS_PIN,
+                  (gpio_num_t)CC1101_GDO0_PIN, (gpio_num_t)CC1101_GDO2_PIN};
+    sys_i2c = {(gpio_num_t)SYS_I2C_SDA, (gpio_num_t)SYS_I2C_SCL};
+    i2c_bus = sys_i2c;
+#endif
+
     validateRotationValue();
     validateRfScanRangeValue();
     validateRfModuleValue();
@@ -556,6 +596,9 @@ void BruceConfigPins::setRfidModule(RFIDModules value) {
 }
 
 void BruceConfigPins::validateRfidModuleValue() {
+#ifdef BRUCE_PN532_ONLY
+    rfidModule = PN532_I2C_MODULE;
+#else
     if (
         rfidModule != M5_RFID2_MODULE && rfidModule != PN532_I2C_MODULE && rfidModule != PN532_SPI_MODULE &&
         rfidModule != RC522_SPI_MODULE && rfidModule != PN532_I2C_SPI_MODULE
@@ -565,6 +608,7 @@ void BruceConfigPins::validateRfidModuleValue() {
     ) {
         rfidModule = M5_RFID2_MODULE;
     }
+#endif
 }
 
 void BruceConfigPins::setiButtonPin(int value) {

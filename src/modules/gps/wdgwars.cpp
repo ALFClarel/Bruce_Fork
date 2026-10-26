@@ -1,3 +1,4 @@
+#if !defined(BRUCE_NO_GPS)
 /**
  * @file wdgwars.cpp
  * @brief WDGoWars connector — uploads wardriving CSV to wdgwars.pl
@@ -180,3 +181,5 @@ bool WDGoWars::_upload_file(File file, const String &upload_message) {
 
     return (serverres.indexOf("\"ok\":true") > -1);
 }
+
+#endif

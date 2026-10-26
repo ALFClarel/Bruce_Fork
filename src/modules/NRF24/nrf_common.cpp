@@ -1,3 +1,4 @@
+#if !defined(BRUCE_NO_NRF24)
 #include "nrf_common.h"
 #include "../../core/bus_HAL.h"
 #include "../../core/mykeyboard.h"
@@ -104,3 +105,5 @@ NRF24_MODE nrf_setMode() {
     }
     return mode;
 }
+
+#endif

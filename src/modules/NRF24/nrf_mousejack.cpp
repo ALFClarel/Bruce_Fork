@@ -1,3 +1,4 @@
+#if !defined(BRUCE_NO_NRF24)
 /**
  * @file nrf_mousejack.cpp
  * @brief MouseJack scan, fingerprint, and HID injection for Bruce firmware.
@@ -953,4 +954,6 @@ void nrf_mousejack() {
 
     loopOptions(options, MENU_TYPE_SUBMENU, "MouseJack");
 }
+#endif
+
 #endif

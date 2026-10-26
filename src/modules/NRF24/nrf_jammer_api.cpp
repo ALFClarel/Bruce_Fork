@@ -1,3 +1,4 @@
+#if !defined(BRUCE_NO_NRF24)
 #if !defined(LITE_VERSION)
 #include "nrf_jammer_api.h"
 #include "core/display.h"
@@ -190,4 +191,6 @@ bool jamDuringConnect(NimBLEAddress target) {
     }
     return false;
 }
+#endif
+
 #endif

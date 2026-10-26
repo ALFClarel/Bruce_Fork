@@ -20,7 +20,9 @@
 #include "core/utils.h"
 #include "core/wifi/wifi_common.h"
 #include "fastpair_crypto.h"
+#ifndef BRUCE_NO_NRF24
 #include "modules/NRF24/nrf_jammer_api.h"
+#endif
 #include <SD.h>
 #include <algorithm>
 #include <esp_heap_caps.h>
@@ -2473,6 +2475,7 @@ bool MultiConnectionAttack::advertisingSpam(std::vector<NimBLEAddress> targets) 
     return true;
 }
 
+#ifndef BRUCE_NO_NRF24
 bool MultiConnectionAttack::nrf24JamAttack(int jamMode) {
     AutoCleanup cleanup([]() { BLEStateManager::deinitBLE(true); });
 
@@ -2556,6 +2559,8 @@ bool MultiConnectionAttack::jamAndConnect(NimBLEAddress target) {
     showAttackResult(false, "Jam & Connect attack failed");
     return false;
 }
+
+#endif
 
 void MultiConnectionAttack::cleanup() {
     for (auto &client : activeConnections) {
@@ -4802,10 +4807,13 @@ void runForceHIDInjection(NimBLEAddress target) {
     if (!script.isEmpty()) { ducky.forceInjectDuckyScript(target, script, "", 0); }
 }
 
+#ifndef BRUCE_NO_NRF24
 void runJamConnectAttack(NimBLEAddress target) {
     MultiConnectionAttack multi;
     multi.jamAndConnect(target);
 }
+
+#endif
 
 void runMultiTargetAttack() {
     std::vector<NimBLEAddress> targets;
@@ -5427,10 +5435,13 @@ void showMemorySubMenu(NimBLEAddress target, SelectedDevice deviceInfo) {
 
 void showDoSSubMenu(NimBLEAddress target, SelectedDevice deviceInfo) {
     const char *options[] = {
-        "Connection Flood", "Advertising Spam", "Jam & Connect (NRF24)", "Protocol Fuzzer"
+        "Connection Flood", "Advertising Spam", "Protocol Fuzzer"
+#ifndef BRUCE_NO_NRF24
+        , "Jam & Connect (NRF24)"
+#endif
     };
 
-    int choice = showSubMenu("DoS Attacks", options, 4);
+    int choice = showSubMenu("DoS Attacks", options, sizeof(options) / sizeof(options[0]));
     if (choice == -1) return;
 
     DoSAttackServiceClass dos;
@@ -5439,8 +5450,10 @@ void showDoSSubMenu(NimBLEAddress target, SelectedDevice deviceInfo) {
     switch (choice) {
         case 0: dos.connectionFlood(target); break;
         case 1: dos.advertisingSpam(target); break;
-        case 2: multi.jamAndConnect(target); break;
-        case 3: runProtocolFuzzer(target); break;
+        case 2: runProtocolFuzzer(target); break;
+#ifndef BRUCE_NO_NRF24
+        case 3: multi.jamAndConnect(target); break;
+#endif
     }
 }
 

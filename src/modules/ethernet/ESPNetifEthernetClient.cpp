@@ -1,3 +1,4 @@
+#if !defined(BRUCE_NO_ETHERNET)
 /**
  * @file ESPNetifEthernetClient.cpp
  * @author Andrea Canale (https://github.com/andreock)
@@ -112,4 +113,6 @@ bool ESPNetifEthernetClient::connected(int sockfd) {
 
     return _connected;
 }
+#endif
+
 #endif

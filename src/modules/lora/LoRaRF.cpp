@@ -1,3 +1,4 @@
+#if !defined(BRUCE_NO_LORA)
 #if !defined(LITE_VERSION)
 #include "LoRaRF.h"
 #include "WString.h"
@@ -471,4 +472,6 @@ void chfreq() {
     serializeJson(doc, file);
     file.close();
 }
+#endif
+
 #endif

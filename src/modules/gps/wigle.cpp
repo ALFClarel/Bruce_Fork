@@ -1,3 +1,4 @@
+#if !defined(BRUCE_NO_GPS)
 /**
  * @file wigle.cpp
  * @author Rennan Cockles - https://github.com/rennancockles
@@ -241,3 +242,5 @@ bool Wigle::_upload_file(File file, const String &upload_message) {
 
     return (serverres.indexOf("\"success\":true") > -1);
 }
+
+#endif

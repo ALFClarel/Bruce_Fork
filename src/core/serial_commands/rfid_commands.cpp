@@ -1,10 +1,12 @@
 #include "rfid_commands.h"
-#if !defined(LITE_VERSION)
+#if !defined(LITE_VERSION) && !defined(BRUCE_PN532_ONLY)
 #include "modules/rfid/ST25R3916.h"
 #endif
 #include "core/sd_functions.h"
 #include "modules/rfid/PN532.h"
+#if !defined(BRUCE_PN532_ONLY)
 #include "modules/rfid/RFID2.h"
+#endif
 #include "modules/rfid/RFIDInterface.h"
 #include <globals.h>
 
@@ -19,6 +21,9 @@
 static RFIDInterface *_rfid = nullptr;
 
 static RFIDInterface *_createRfidModule() {
+#ifdef BRUCE_PN532_ONLY
+    return new PN532(PN532::CONNECTION_TYPE::I2C);
+#else
     switch (bruceConfigPins.rfidModule) {
         case PN532_I2C_MODULE: return new PN532(PN532::CONNECTION_TYPE::I2C);
 #ifdef M5STICK
@@ -33,6 +38,7 @@ static RFIDInterface *_createRfidModule() {
         case M5_RFID2_MODULE:
         default: return new RFID2();
     }
+#endif
 }
 
 static bool _ensureRfid() {

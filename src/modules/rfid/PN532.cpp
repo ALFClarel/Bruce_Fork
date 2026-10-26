@@ -333,6 +333,12 @@ PN532::PN532(CONNECTION_TYPE connection_type) {
         );
 }
 
+#ifdef BRUCE_PN532_ONLY
+PN532::~PN532() {
+    if (_started) nfc.powerDown();
+}
+#endif
+
 bool PN532::begin() {
     TwoWire *Wire = nullptr;
 #ifdef M5STICK
@@ -383,7 +389,12 @@ bool PN532::begin() {
         (int)(i2c_check || versiondata)
     );
 
+#ifdef BRUCE_PN532_ONLY
+    _started = versiondata != 0;
+    return _started;
+#else
     return i2c_check || versiondata;
+#endif
 }
 
 int PN532::read(int cardBaudRate) {

@@ -110,7 +110,9 @@ def _normalize_option_value(value) -> str:
 def compute_signature():
     # Any change here should force a rebuild.
     parts = []
-    parts.append("v=3")
+    parts.append("v=4")
+    parts.append(str(env.get("BUILD_FLAGS", [])))
+    parts.append(sha256_file("include/tembed_capabilities.h"))
     parts.append(f"watch_sha256={sha256_file(WATCH_FILE)}")
 
     mqjs_build_c = os.path.join(MQJS_PATH, "mquickjs_build.c")
@@ -155,6 +157,13 @@ def generate_headers():
         print("Skipped MQJS headers build.")
         return
 
+    if _has_define("BRUCE_TEMBED_BASE"):
+        CFLAGS.extend(["-DBRUCE_TEMBED_BASE", "-include", "include/tembed_capabilities.h"])
+        if _has_define("BRUCE_TEMBED_PLUS"):
+            CFLAGS.append("-DBRUCE_TEMBED_PLUS")
+        else:
+            INCLUDES.remove("nrf24_js")
+
     os.makedirs(BUILD_DIR, exist_ok=True)
 
     if not needs_rebuild():
@@ -162,6 +171,8 @@ def generate_headers():
 
     try:
         host_cc = _resolve_host_cc()
+        if not shutil.which(host_cc) and _has_define("BRUCE_TEMBED_BASE"):
+            raise RuntimeError("A host C compiler is required to regenerate the target-specific JS ROM")
         if not shutil.which(host_cc):
             if os.path.exists(os.path.join(BJS_INTERPRETER_PATH, "mqjs_stdlib.h")):
                 print("Host compiler not found; skipping mqjs_stdlib header generation.")

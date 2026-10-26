@@ -296,6 +296,7 @@ void ConfigMenu::devMenu() {
 void ConfigMenu::pinsMenu() {
     while (true) {
         std::vector<Option> localOptions = {
+#ifndef BRUCE_TEMBED_BASE
             {"I2C Finder",     [this]() { find_i2c_addresses(); }                      },
             {"CC1101 Pins",    [this]() { setSPIPinsMenu(bruceConfigPins.CC1101_bus); }},
             {"NRF24  Pins",    [this]() { setSPIPinsMenu(bruceConfigPins.NRF24_bus); } },
@@ -310,6 +311,9 @@ void ConfigMenu::pinsMenu() {
             {"GPS Pins",       [this]() { setUARTPinsMenu(bruceConfigPins.gps_bus); }  },
             //{"Serial use USB",  [this]() { switchToUSBSerial(); }                       },
             //{"Serial use UART", [this]() { switchToUARTSerial(); }                      },
+#else
+            {"I2C Pins", [this]() { setI2CPinsMenu(bruceConfigPins.i2c_bus); }},
+#endif
             {"Back",           []() {}                                                 },
         };
 

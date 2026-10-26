@@ -1,3 +1,4 @@
+#if !defined(BRUCE_NO_EXTERNAL_NFC)
 #ifndef LITE_VERSION
 #include "pn532ble.h"
 #include "apdu.h"
@@ -1477,4 +1478,6 @@ String Pn532ble::saveHfDumpBinFile(std::vector<uint8_t> data, String uid, String
     file.close();
     return fileName;
 }
+#endif
+
 #endif

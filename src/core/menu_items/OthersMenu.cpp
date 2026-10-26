@@ -5,7 +5,9 @@
 #include "modules/badusb_ble/ducky_typer.h"
 #include "modules/bjs_interpreter/interpreter.h"
 #include "modules/others/clicker.h"
+#if !defined(BRUCE_NO_IBUTTON)
 #include "modules/others/ibutton.h"
+#endif
 #include "modules/others/mic.h"
 #include "modules/others/qrcode_menu.h"
 #include "modules/others/tururururu.h"
@@ -27,7 +29,9 @@ void OthersMenu::optionsMenu() {
 #endif
 
 #ifndef LITE_VERSION
+#if !defined(BRUCE_NO_IBUTTON)
         {"iButton",      setup_ibutton                },
+#endif
 #endif
 
         // Timer removed - moved to another "Clock"

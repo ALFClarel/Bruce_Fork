@@ -1,3 +1,4 @@
+#if !defined(BRUCE_PN532_ONLY)
 ﻿#include "ST25R3916.h"
 #if !defined(LITE_VERSION)
 
@@ -3340,3 +3341,5 @@ int ST25R3916::_emulateFelica() {
 }
 
 #endif // !LITE_VERSION
+
+#endif

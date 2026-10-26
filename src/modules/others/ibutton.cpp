@@ -1,3 +1,4 @@
+#if !defined(BRUCE_NO_IBUTTON)
 #ifndef LITE_VERSION
 #include "ibutton.h"
 #include "core/display.h"
@@ -427,5 +428,7 @@ void setiButtonPinMenu() {
     options.clear();
     bruceConfigPins.setiButtonPin(sel);
 }
+
+#endif
 
 #endif

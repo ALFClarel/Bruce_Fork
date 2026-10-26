@@ -348,7 +348,11 @@ bool initRfModule(String mode, float frequency) {
 void deinitRfModule() {
     if (bruceConfigPins.rfModule == CC1101_SPI_MODULE) {
         if (cc1101_spi_ready) {
+#ifdef BRUCE_TEMBED_BASE
+            ELECHOUSE_cc1101.goSleep();
+#else
             ELECHOUSE_cc1101.setSidle();
+#endif
             cc1101_spi_ready = false;
         }
         digitalWrite(bruceConfigPins.CC1101_bus.io0, LOW);

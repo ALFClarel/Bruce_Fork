@@ -1,3 +1,4 @@
+#if !defined(BRUCE_NO_ETHERNET)
 /**
  * @file ARPScanner.cpp
  * @brief ARP Scanner module for every esp-netif
@@ -329,4 +330,6 @@ void ARPScanner::afterScanOptions(const Host &host) {
         // arpSpoofing(host, true);
     }
 }
+#endif
+
 #endif

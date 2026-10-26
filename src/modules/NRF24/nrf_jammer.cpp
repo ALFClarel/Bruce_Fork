@@ -1,3 +1,4 @@
+#if !defined(BRUCE_NO_NRF24)
 #include "nrf_jammer.h"
 #include "core/display.h"
 #include "core/mykeyboard.h"
@@ -205,3 +206,5 @@ void nrf_jammer() {
         displayError("NRF24 not found", true);
     }
 }
+
+#endif

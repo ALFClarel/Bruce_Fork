@@ -1,3 +1,4 @@
+#if !defined(BRUCE_NO_ETHERNET)
 /**
  * @file MACFlooding.cpp
  * @author Andrea Canale (https://github.com/andreock)
@@ -168,4 +169,6 @@ void MACFlooding::send_packet() {
     // Send packet
     netif->linkoutput(netif, p);
 }
+#endif
+
 #endif

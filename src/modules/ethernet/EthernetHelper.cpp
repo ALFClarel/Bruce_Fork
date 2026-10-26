@@ -1,3 +1,4 @@
+#if !defined(BRUCE_NO_ETHERNET)
 /**
  * @file EthernetHelper.cpp
  * @author Andrea Canale (https://github.com/andreock)
@@ -142,4 +143,6 @@ void EthernetHelper::stop() {
     ETH.end();
     ethSpi = nullptr;
 }
+#endif
+
 #endif

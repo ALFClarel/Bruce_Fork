@@ -1,3 +1,4 @@
+#if !defined(BRUCE_NO_NRF24)
 #if !defined(LITE_VERSION) && !defined(DISABLE_INTERPRETER)
 #include "nrf24_js.h"
 #include "helpers_js.h"
@@ -118,5 +119,7 @@ JSValue native_nrf24SetChannel(JSContext *ctx, JSValue *this_val, int argc, JSVa
 JSValue native_nrf24IsConnected(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
     return JS_NewBool(NRFradio.isChipConnected());
 }
+
+#endif
 
 #endif

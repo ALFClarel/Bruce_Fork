@@ -44,9 +44,11 @@ void RFMenu::optionsMenu() {
 
 void RFMenu::configMenu() {
     options = {
+#ifndef BRUCE_TEMBED_BASE
         {"RF TX Pin", lambdaHelper(gsetRfTxPin, true)},
         {"RF RX Pin", lambdaHelper(gsetRfRxPin, true)},
         {"RF Module", setRFModuleMenu},
+#endif
         {"RF Frequency", setRFFreqMenu},
         {"Back", [this]() { optionsMenu(); }},
     };

@@ -579,6 +579,7 @@ static const JSPropDef js_ble[] = {
 
 const JSClassDef js_ble_obj = JS_OBJECT_DEF("BLE", js_ble);
 
+#ifndef BRUCE_NO_NRF24
 /* NRF24 module */
 static const JSPropDef js_nrf24[] = {
     JS_CFUNC_DEF("begin", 1, native_nrf24Begin),
@@ -590,6 +591,7 @@ static const JSPropDef js_nrf24[] = {
 };
 
 const JSClassDef js_nrf24_obj = JS_OBJECT_DEF("NRF24", js_nrf24);
+#endif
 
 /* LED module */
 static const JSPropDef js_led[] = {
@@ -854,7 +856,9 @@ static const JSPropDef js_global_object[] = {
     JS_PROP_CLASS_DEF("subghz", &js_subghz_obj),
     JS_PROP_CLASS_DEF("wifi", &js_wifi_obj),
     JS_PROP_CLASS_DEF("ble", &js_ble_obj),
+#ifndef BRUCE_NO_NRF24
     JS_PROP_CLASS_DEF("nrf24", &js_nrf24_obj),
+#endif
     JS_PROP_CLASS_DEF("led", &js_led_obj),
     JS_PROP_CLASS_DEF("menu", &js_menu_obj),
 

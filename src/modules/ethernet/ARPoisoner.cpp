@@ -1,3 +1,4 @@
+#if !defined(BRUCE_NO_ETHERNET)
 /**
  * @file ARPPoisoner.cpp
  * @brief ARP Poisoner module for every esp-netif
@@ -162,4 +163,6 @@ void ARPoisoner::sendARPPacket(
         pcapFile.flush();
     }
 }
+#endif
+
 #endif

@@ -1,3 +1,4 @@
+#if !defined(BRUCE_NO_ETHERNET)
 /**
  * @file ARPSpoofer.cpp
  * @brief ARP Spoofer module for every esp-netif
@@ -179,4 +180,6 @@ void ARPSpoofer::sendARPPacket(
         pcapFile.flush();
     }
 }
+#endif
+
 #endif

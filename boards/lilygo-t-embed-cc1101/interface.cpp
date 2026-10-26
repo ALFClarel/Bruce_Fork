@@ -54,11 +54,14 @@ void _setup_gpio() {
     digitalWrite(TFT_CS, HIGH);
     pinMode(SDCARD_CS, OUTPUT);
     digitalWrite(SDCARD_CS, HIGH);
+#ifndef BRUCE_NO_NRF24
     pinMode(NRF24_SS_PIN, OUTPUT); // NRF24 on Plus
     digitalWrite(NRF24_SS_PIN, HIGH);
 
     pinMode(NRF24_CE_PIN, OUTPUT); // put nRF24 in standby
     digitalWrite(NRF24_CE_PIN, LOW);
+
+#endif
 
     // Power chip pin
     pinMode(PIN_POWER_ON, OUTPUT);
@@ -74,7 +77,7 @@ void _setup_gpio() {
         PPM.setChargeTargetVoltage(4208);
         PPM.enableMeasure(PowersBQ25896::CONTINUOUS);
     }
-    if (bq.getDesignCap() != BATTERY_DESIGN_CAPACITY) { bq.setDesignCap(BATTERY_DESIGN_CAPACITY); }
+    // Preserve the gauge's battery calibration; capacity is not known from board type.
     // Start with default IR, RF and RFID Configs, replace old
     bruceConfigPins.rfModule = CC1101_SPI_MODULE;
     bruceConfigPins.rfidModule = PN532_I2C_MODULE;

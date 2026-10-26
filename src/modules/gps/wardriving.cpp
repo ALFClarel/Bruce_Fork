@@ -1,3 +1,4 @@
+#if !defined(BRUCE_NO_GPS)
 /**
  * @file wardriving.cpp
  * @author IncursioHack - https://github.com/IncursioHack
@@ -557,3 +558,5 @@ void Wardriving::restorePins() {
         rxPinReleased = false;
     }
 }
+
+#endif

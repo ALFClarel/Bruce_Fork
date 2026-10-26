@@ -2,11 +2,21 @@
 #include "core/display.h"
 #include "core/settings.h"
 #include "core/utils.h"
+#if !defined(BRUCE_NO_EXTERNAL_NFC)
 #include "modules/rfid/PN532KillerTools.h"
+#endif
+#if !defined(BRUCE_NO_EXTERNAL_NFC)
 #include "modules/rfid/amiibo.h"
+#endif
+#if !defined(BRUCE_NO_EXTERNAL_NFC)
 #include "modules/rfid/chameleon.h"
+#endif
+#if !defined(BRUCE_NO_EXTERNAL_NFC)
 #include "modules/rfid/pn532ble.h"
+#endif
+#if !defined(BRUCE_NO_LF_RFID)
 #include "modules/rfid/rfid125.h"
+#endif
 #include "modules/rfid/srix_tool.h" //added for srix Tool
 #include "modules/rfid/tag_o_matic.h"
 
@@ -19,7 +29,9 @@ void RFIDMenu::optionsMenu() {
         {"Read tag",    [=]() { TagOMatic(); }                     },
 #ifndef LITE_VERSION
         {"Read EMV",    [=]() { EMVReader(); }                     },
+#if !defined(BRUCE_NO_LF_RFID)
         {"Read 125kHz", [=]() { RFID125(); }                       },
+#endif
 #endif
         {"Scan tags",   [=]() { TagOMatic(TagOMatic::SCAN_MODE); } },
         {"Load file",   [=]() { TagOMatic(TagOMatic::LOAD_MODE); } },
@@ -40,6 +52,7 @@ void RFIDMenu::optionsMenu() {
     }
     options.push_back({"Write NDEF", [=]() { TagOMatic(TagOMatic::WRITE_NDEF_MODE); }});
 #endif
+#ifndef BRUCE_NO_EXTERNAL_NFC
 #ifndef LITE_VERSION
     options.push_back({"Amiibolink", [=]() { Amiibo(); }});
 #endif
@@ -48,6 +61,7 @@ void RFIDMenu::optionsMenu() {
     options.push_back({"PN532 BLE", [=]() { Pn532ble(); }});
 #if !defined(REMOVE_RFID_HW_INTERFACE) // Remove Hardware interface menu due to lack of external GPIO
     options.push_back({"PN532 UART", [=]() { PN532KillerTools(); }});
+#endif
 #endif
 #endif
     options.push_back({"Config", [this]() { configMenu(); }});
@@ -85,7 +99,9 @@ void RFIDMenu::optionsMenu() {
 void RFIDMenu::configMenu() {
     options = {
 #if !defined(REMOVE_RFID_HW_INTERFACE)  // Remove Hardware interface menu due to lack of external GPIO
+#if !defined(BRUCE_PN532_ONLY)
         {"RFID Module", setRFIDModuleMenu          },
+#endif
 #endif
         {"Add MIF Key", addMifareKeyMenu           },
         {"Back",        [this]() { optionsMenu(); }},

@@ -1,3 +1,4 @@
+#if !defined(BRUCE_NO_EXTERNAL_NFC)
 /**
  * @file amiibolink.cpp
  * @author Rennan Cockles (https://github.com/rennancockles)
@@ -199,5 +200,7 @@ void Amiibo::delayWithReturn(uint32_t ms) {
     auto tm = millis();
     while (millis() - tm < ms && !returnToMenu) { vTaskDelay(pdMS_TO_TICKS(50)); }
 }
+
+#endif
 
 #endif

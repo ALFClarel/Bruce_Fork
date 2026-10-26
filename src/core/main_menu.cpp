@@ -8,18 +8,28 @@ MainMenu::MainMenu() {
         &wifiMenu,
         &bleMenu,
         &rfMenu,
+#if !defined(BRUCE_NO_NRF24)
         &nrf24Menu,
+#endif
 #if !defined(LITE_VERSION)
+#if !defined(BRUCE_NO_LORA)
         &loraMenu,
 #endif
+#endif
 #if defined(FM_SI4713) && !defined(LITE_VERSION)
+#if !defined(BRUCE_NO_FM)
         &fmMenu,
+#endif
 #endif
         &irMenu,
 #if !defined(LITE_VERSION)
+#if !defined(BRUCE_NO_ETHERNET)
         &ethernetMenu,
 #endif
+#endif
+#if !defined(BRUCE_NO_GPS)
         &gpsMenu,
+#endif
         &rfidMenu,
         &fileMenu,
 #if !defined(LITE_VERSION) && !defined(DISABLE_INTERPRETER)

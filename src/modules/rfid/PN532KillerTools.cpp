@@ -1,3 +1,4 @@
+#if !defined(BRUCE_NO_EXTERNAL_NFC)
 #ifndef LITE_VERSION
 #include "PN532KillerTools.h"
 #include "PN532Killer.h"
@@ -927,4 +928,6 @@ void PN532KillerTools::udpWifiSelectMenu() {
     selOptions.push_back({"Return", [&]() { return; }});
     loopOptions(selOptions);
 }
+#endif
+
 #endif

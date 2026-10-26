@@ -229,7 +229,9 @@ void setup_gpio() {
     _setup_gpio();
 
     // Smoochiee v2 uses a AW9325 tro control GPS, MIC, Vibro and CC1101 RX/TX powerlines
+#if !defined(BRUCE_NO_I2C_DISCOVERY)
     ioExpander.init(IO_EXPANDER_ADDRESS, &Wire);
+#endif
 
     initCC1101once(acquireSPIBus(
         bruceConfigPins.CC1101_bus.sck, bruceConfigPins.CC1101_bus.miso, bruceConfigPins.CC1101_bus.mosi

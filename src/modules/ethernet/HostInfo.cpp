@@ -1,3 +1,4 @@
+#if !defined(BRUCE_NO_ETHERNET)
 /**
  * @file HostInfo.cpp
  * @brief HostInfo module for every esp-netif
@@ -159,3 +160,5 @@ void HostInfo::setup(const Host &host) {
 
     area.show();
 }
+
+#endif

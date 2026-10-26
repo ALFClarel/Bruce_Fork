@@ -1,3 +1,4 @@
+#if !defined(BRUCE_NO_NRF24)
 #include "nrf_spectrum.h"
 #include "core/display.h"
 #include "core/mykeyboard.h"
@@ -92,3 +93,5 @@ void nrf_spectrum() {
         return;
     }
 }
+
+#endif

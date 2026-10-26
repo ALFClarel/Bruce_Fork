@@ -1,3 +1,4 @@
+#if !defined(BRUCE_PN532_ONLY)
 /**
  * @file RFID2.cpp
  * @author Rennan Cockles (https://github.com/rennancockles)
@@ -723,3 +724,5 @@ int RFID2::write_ndef_blocks() {
 
     return SUCCESS;
 }
+
+#endif
