@@ -3,7 +3,7 @@
 
 // Usage: RAM_LOG("stage-name"); at each boot stage you want to measure.
 
-#if defined(ENABLE_RAM_LOGGING)
+#if defined(ENABLE_RAM_LOGGING) && ENABLE_RAM_LOGGING && !defined(BRUCE_TEMBED_BASE)
 
 // Logs, over Serial, the current heap/PSRAM state and elapsed time for a named
 // boot stage. Focus is on INTERNAL DRAM (free + largest contiguous block),

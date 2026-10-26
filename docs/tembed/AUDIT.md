@@ -37,3 +37,7 @@ ELF/bin comparison, then hardware smoke tests (SD, mic record/spectrum, playback
 PN532, encoder, BLE, USB, WebUI/OTA). Neither native Amiibo emulation nor NFC RSSI can
 be fabricated by software. A strict two-level UI conflicts with preserving micMenu
 as-is; retain its existing Spectrum/Record selector instead of duplicating it.
+
+## Correction issue du lien ESP32
+
+Le dossier `modules/ethernet` contient aussi les implémentations esp-netif utilisées par le Wi-Fi : `ARPScanner`, `ARPSpoofer`, `ARPoisoner` et `HostInfo`. Elles sont conservées en place. Seules les branches et pilotes ETH/W5500 sont exclus ; aucun scanner ARP parallèle n’est ajouté.

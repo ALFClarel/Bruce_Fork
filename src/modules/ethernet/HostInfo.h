@@ -1,13 +1,15 @@
 #ifndef HOST_INFO_H
 #define HOST_INFO_H
 
+#ifndef BRUCE_NO_ETHERNET
 #include "ESPNetifEthernetClient.h"
+#endif
 #include "modules/wifi/scan_hosts.h"
 #include <map>
 class HostInfo {
 private:
     WiFiClient *wifi_client = nullptr;
-#if !defined(LITE_VERSION)
+#if !defined(LITE_VERSION) && !defined(BRUCE_NO_ETHERNET)
     ESPNetifEthernetClient *eth_client = nullptr;
 #endif
     void setup(const Host &host);

@@ -1,4 +1,3 @@
-#if !defined(BRUCE_NO_ETHERNET)
 /**
  * @file ARPScanner.cpp
  * @brief ARP Scanner module for every esp-netif
@@ -21,12 +20,15 @@
 #include "modules/wifi/scan_hosts.h"
 #if !defined(LITE_VERSION)
 #include "modules/ethernet/ARPoisoner.h"
+#ifndef BRUCE_NO_ETHERNET
 #include "modules/ethernet/DHCPStarvation.h"
 #include "modules/ethernet/MACFlooding.h"
 #include <ETH.h>
 #endif
+#endif
 #include <globals.h>
 #include <sstream>
+#ifndef BRUCE_NO_ETHERNET
 void run_arp_scanner() {
 #if !defined(LITE_VERSION)
     // Prefer the Arduino ETH netif, fall back to legacy key-based lookup
@@ -39,6 +41,8 @@ void run_arp_scanner() {
     ARPScanner{esp_netinterface};
 #endif
 }
+
+#endif
 
 ARPScanner::ARPScanner(esp_netif_t *_esp_net_interface) {
     esp_net_interface = _esp_net_interface;
@@ -310,6 +314,10 @@ void ARPScanner::afterScanOptions(const Host &host) {
              uint8_t mac[6];
              esp_err_t err = esp_netif_get_mac(esp_net_interface, mac);
              if (err == ESP_OK) {
+                 if (it == hostslist_eth.end()) {
+                     displayError("Gateway not in ARP table", true);
+                     return;
+                 }
                  uint8_t gw_mac[6];
                  macStringToByteArray((*it).mac.c_str(), gw_mac);
                  ARPSpoofer(host, gw, gw_mac, mac, false);
@@ -319,8 +327,10 @@ void ARPScanner::afterScanOptions(const Host &host) {
          }},
 #if !defined(LITE_VERSION)
         {"ARP Poisoning", [this]() { ARPoisoner{gateway}; }},
+#ifndef BRUCE_NO_ETHERNET
         {"DHCP Starvation", [=]() { DHCPStarvation(); }},
         {"MAC Flooding", [=]() { MACFlooding(); }},
+#endif
 #endif
     };
     // if(sdcardMounted && bruceConfig.devMode) options.push_back({"ARP MITM (WIP)",  [&](){ opt=5;  }});
@@ -330,6 +340,4 @@ void ARPScanner::afterScanOptions(const Host &host) {
         // arpSpoofing(host, true);
     }
 }
-#endif
-
 #endif

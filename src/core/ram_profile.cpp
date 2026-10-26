@@ -1,6 +1,6 @@
 #include "ram_profile.h"
 
-#if defined(ENABLE_RAM_LOGGING)
+#if defined(ENABLE_RAM_LOGGING) && ENABLE_RAM_LOGGING && !defined(BRUCE_TEMBED_BASE)
 
 #include <Arduino.h>
 #include <esp_heap_caps.h>

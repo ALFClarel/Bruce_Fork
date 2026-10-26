@@ -34,10 +34,12 @@ SSH, WireGuard, l'interpréteur et d'autres fonctions demandées.
 | iButton | `others/ibutton.cpp`, entrée Others | OneWire |
 | RFID LF | `rfid125.cpp`, entrée 125 kHz et pinmap | — |
 | NFC externe | RFID2/RC522, ST25R3916, PN532 BLE/UART/Killer, Chameleon, client Amiibolink | MFRC522v2, ST25R3916/RFAL, ESP-ChameleonUltra, ESP-Amiibolink, ESP-PN532BLE/UART/Killer |
-| Ethernet externe | `modules/ethernet`, menu et pinmap W5500 | bibliothèques internes rendues inaccessibles |
+| Ethernet externe | `EthernetHelper`, `ESPNetifEthernetClient`, menus DHCP/MAC Ethernet, menu et pinmap W5500 | bibliothèques internes rendues inaccessibles |
 | Autres cartes | seuls le `.ini` et `interface.cpp` ciblés sont sélectionnés | aucun gain fictif annoncé pour des fichiers déjà exclus |
 | Wi-Fi 5/6 GHz | tables, regroupements de bandes et libellés spécifiques | — |
 | CI multicarte | cinq workflows amont remplacés par la validation T-Embed | matrice de 61 jobs supprimée |
+
+Les classes `ARPScanner`, `ARPSpoofer`, `ARPoisoner` et `HostInfo` restent compilées : malgré leur dossier `ethernet`, elles sont partagées par le Wi-Fi. Leurs branches W5500/ETH sont gardées séparément.
 
 La pinmap conserve **exactement** `MIC_SPM1423`, `PIN_CLK=39`, `PIN_DATA=42`,
 `HAS_NS4168_SPKR`, `BCLK=46`, `WCLK=40`, `DOUT=7`, `MCLK=PIN_CLK`.
@@ -91,7 +93,7 @@ natifs plutôt que recréer les mêmes fonctions.
 ## Mesures et validation
 
 `tools/check_tembed.py` vérifie les limites de fréquence, le gouverneur, l'absence de
-code émis par 33 unités désactivées, la conservation de micMenu et les dépendances.
+code émis par 29 unités désactivées, la conservation de micMenu et les dépendances.
 Les tests hôtes passent. Ils ne remplacent pas une compilation ESP32 ou un test matériel.
 
 La CI construit la cible et la référence `a59213f3ec6cd302fa32c2042b2700c9c24d991a`,

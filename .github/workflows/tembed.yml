@@ -34,6 +34,7 @@ jobs:
             ~/.platformio
             .pio/libdeps
           key: tembed-${{ matrix.variant }}-${{ runner.os }}-${{ hashFiles('platformio.ini', 'boards/lilygo-t-embed-cc1101/*.ini') }}
+          restore-keys: tembed-${{ matrix.variant }}-${{ runner.os }}-
       - name: Verify hardware boundaries and policy
         if: matrix.variant == 'trimmed'
         run: python tools/check_tembed.py
