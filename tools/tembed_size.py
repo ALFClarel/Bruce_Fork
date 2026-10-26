@@ -12,18 +12,24 @@ def measure(directory):
     sections = [struct.unpack_from('<IIIIIIIIII', raw, header[6] + i * header[11]) for i in range(header[12])]
     strings = sections[header[13]]
     names = raw[strings[4]:strings[4] + strings[5]]
-    dram = iram = 0
+    dram = iram = reserved_dram = 0
     selected = {}
     for name, kind, flags, address, offset, size, *_ in sections:
         if not flags & 2:
             continue
         label = names[name:names.index(b'\0', name)].decode()
+        # ESP32-S3's linker reserves a DRAM alias for IRAM in this dummy section.
+        # It is not static .data/.bss; counting it twice overstates DRAM use.
+        if label == '.dram0.dummy':
+            reserved_dram += size
+            continue
         if 0x3FC80000 <= address < 0x3FE00000:
             dram += size; selected[label] = size
         elif 0x40370000 <= address < 0x40400000:
             iram += size
     return {'firmware_bytes': (directory / 'firmware.bin').stat().st_size,
-            'static_dram_bytes': dram, 'iram_bytes': iram, 'dram_sections': selected}
+            'static_dram_bytes': dram, 'iram_bytes': iram, 'virtual_dram_reservation_bytes': reserved_dram,
+            'dram_sections': selected}
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser()

@@ -2,6 +2,9 @@ name: T-Embed CC1101 base
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
   pull_request:
   workflow_dispatch:
 permissions:

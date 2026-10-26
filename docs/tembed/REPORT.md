@@ -106,19 +106,32 @@ La CI échoue si le `.bin` ne diminue pas ou si la DRAM statique augmente.
 Les durées de build sont enregistrées ; le cache et les téléchargements influencent
 ces durées. Le temps de démarrage et la consommation doivent être mesurés sur la carte.
 
-| Étape | Flash / RAM mesurées |
-|---|---|
-| Retrait matériel | pas encore de mesure validée au moment de rédaction |
-| A | en attente de compilation comparable |
-| B | en attente de compilation comparable ; service LED existant maintenu actif |
-| C | en attente ; utilise la pile audio asynchrone native à la demande |
-| D | en attente |
-| E | en attente |
-| F | en attente ; augmente légèrement les fichiers stockés sur SD |
+### Résultat validé — 26 octobre 2026
 
-Les ajouts fonctionnels peuvent augmenter une étape intermédiaire. Le critère
-vérifié est le résultat final par rapport à la référence. Aucun gain estimé en
-Ko, millisecondes ou pourcentage n'est présenté comme un résultat mesuré.
+[Build et contrôle de taille réussis](https://github.com/ALFClarel/Bruce_Fork/actions/runs/40300782923),
+firmware au commit `35ba51bdbc6d76db7d87471d9fde96e25812234d`.
+
+| Mesure | Référence | Fork | Gain |
+|---|---:|---:|---:|
+| Application .bin | 4 200 960 octets | 3 726 288 octets | **474 672 octets, soit 11,3 %** |
+| DRAM statique (.data/.bss/.noinit) | 121 904 octets | 120 860 octets | **1 044 octets** |
+| IRAM | 110 336 octets | 108 800 octets | **1 536 octets** |
+| Commande PlatformIO, ces deux exécutions | 514,50 s | 352,66 s | 161,84 s observées |
+
+La différence de durée inclut l'effet des dépendances, des téléchargements et du
+cache ; elle ne constitue pas un benchmark isolé du compilateur. Le démarrage,
+la consommation et les pics de heap/PSRAM restent à mesurer sur la carte.
+
+Le premier rapport ELF comptait aussi `.dram0.dummy` dans la DRAM. Cette section
+réserve l'alias d'adressage de l'IRAM : elle n'est pas de la DRAM statique de données.
+Les valeurs ci-dessus excluent cette réserve et concordent avec PlatformIO.
+Le lecteur ELF est corrigé pour les prochaines comparaisons. Les deux catégories
+DRAM et IRAM restent présentées séparément.
+
+Les artefacts du build validé contiennent l'image fusionnée, l'image OTA, le
+manifeste et les sommes SHA-256. Leur conservation est de 30 jours. Les mesures
+intermédiaires de chaque patch A à F n'ont pas été instrumentées ; les ajouts
+peuvent augmenter leur étape, tandis que le résultat final est mesuré plus petit.
 
 ## Flash et futur VPS
 
@@ -158,3 +171,14 @@ plus tard ; aucun VPS n'est configuré ou modifié ici.
 - BadUSB, BLE clavier/spam, réseau, SD, JS et OTA doivent subir un essai matériel.
 - Les dépendances Git amont restantes suivent parfois des branches mobiles ;
   un verrouillage complet de tous les SHA reste une amélioration de reproductibilité.
+
+### Commits des fonctionnalités
+
+| Patch | Commit publié |
+|---|---|
+| A | [Molette RF et lecture](https://github.com/ALFClarel/Bruce_Fork/commit/ab37e4345f1e40be2442cc6daca0f63aa038bd54) |
+| B | [Indicateur LED partagé](https://github.com/ALFClarel/Bruce_Fork/commit/72ba2e0724d96cb207065aa23830bfdb697cfbbe) |
+| C | [Fox Hunt et audio natif](https://github.com/ALFClarel/Bruce_Fork/commit/5f8578ce37aaac081cf7cdb540bd8831b70df4a4) |
+| D | [Gouverneur batterie](https://github.com/ALFClarel/Bruce_Fork/commit/db37744f10add563b2cc3890edcffefda2e73ed4) |
+| E | [Pont NFC](https://github.com/ALFClarel/Bruce_Fork/commit/1cab23cd979ed3723fdeb26d45b5dc92c311cdca) |
+| F | [Annotations et QR](https://github.com/ALFClarel/Bruce_Fork/commit/18d216e7853f95181b23bcccac04bedc1fa6cb97) |
