@@ -76,7 +76,11 @@ void MainMenu::begin(void) {
             );
         }
     }
+#ifdef BRUCE_TEMBED_BASE
+    _currentIndex = loopOptions(options, MENU_TYPE_SUBMENU, "Bruce", _currentIndex);
+#else
     _currentIndex = loopOptions(options, MENU_TYPE_MAIN, "Main Menu", _currentIndex);
+#endif
 };
 
 /*********************************************************************

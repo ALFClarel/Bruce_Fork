@@ -115,19 +115,21 @@ void BruceConfigPins::fromJson(JsonObject obj) {
         if (val < GPIO_NUM_MAX) iButton = val;
         else log_w("iButton pin not set");
     }
-#endif else {
+ else {
         count++;
         log_e("Fail");
     }
+#endif
 
 #ifndef BRUCE_TEMBED_BASE
     if (!root["gpsBaudrate"].isNull()) {
         gpsBaudrate = root["gpsBaudrate"].as<int>();
     }
-#endif else {
+ else {
         count++;
         log_e("Fail");
     }
+#endif
 
     if (!root["CC1101_Pins"].isNull()) {
         SPIPins def = CC1101_bus;
@@ -150,10 +152,11 @@ void BruceConfigPins::fromJson(JsonObject obj) {
             count++;
         }
     }
-#endif else {
+ else {
         count++;
         log_e("Fail");
     }
+#endif
     if (!root["PN532_Pins"].isNull()) {
         SPIPins def = PN532_bus;
         PN532_bus.fromJson(root["PN532_Pins"].as<JsonObject>());
@@ -182,10 +185,11 @@ void BruceConfigPins::fromJson(JsonObject obj) {
     if (!root["W5500_Pins"].isNull()) {
         W5500_bus.fromJson(root["W5500_Pins"].as<JsonObject>());
     }
-#endif else {
+ else {
         count++;
         log_e("Fail");
     }
+#endif
 
 #ifndef BRUCE_TEMBED_BASE
     if (!root["LoRa_Pins"].isNull()) {
@@ -196,10 +200,11 @@ void BruceConfigPins::fromJson(JsonObject obj) {
             count++;
         }
     }
-#endif else {
+ else {
         count++;
         log_e("Fail");
     }
+#endif
 
 #ifndef BRUCE_TEMBED_BASE
     if (!root["ST25R_Pins"].isNull()) {
@@ -210,10 +215,11 @@ void BruceConfigPins::fromJson(JsonObject obj) {
             count++;
         }
     }
-#endif else {
+ else {
         count++;
         log_e("Fail");
     }
+#endif
 #endif
     // DO NOT UPDATE THESE VALIES, THEY ARE USED INTERNALLY BY THE SYSTEM,
     // THEY NEVER CHANGE EXCEPT FOR CARDPUTER/CARDPUTER ADV environment
@@ -245,10 +251,11 @@ void BruceConfigPins::fromJson(JsonObject obj) {
     if (!root["GPS_bus"].isNull()) {
         gps_bus.fromJson(root["GPS_bus"].as<JsonObject>());
     }
-#endif else {
+ else {
         count++;
         log_e("Fail");
     }
+#endif
     validateConfig();
     if (count > 0) saveFile();
 }

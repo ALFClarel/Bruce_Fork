@@ -1,6 +1,7 @@
 #pragma once
 // Forced into ALL translation units (including libraries and the JS ROM generator).
 #ifdef BRUCE_TEMBED_BASE
+#define BRUCE_WIFI_24GHZ_ONLY
 #define BRUCE_NO_LORA
 #ifndef BRUCE_TEMBED_PLUS
 #define BRUCE_NO_NRF24

@@ -339,6 +339,7 @@ void TagOMatic::read_card() {
     if (_bridgeMode) _lastReadTime = millis();
 #endif
     int readStatus = _rfid->read();
+    const bool tagWasAbsent = readStatus == RFIDInterface::TAG_NOT_PRESENT;
     if (readStatus != RFIDInterface::SUCCESS) {
         if (readStatus == RFIDInterface::NOT_IMPLEMENTED) {
             show_not_implemented_card();
@@ -352,7 +353,7 @@ void TagOMatic::read_card() {
             }
             if (readStatus != RFIDInterface::SUCCESS) {
 #ifdef BRUCE_TEMBED_BASE
-                if (_bridgeMode && readStatus == RFIDInterface::TAG_NOT_PRESENT) _bridgeUID = "";
+                if (_bridgeMode && tagWasAbsent && readStatus == RFIDInterface::TAG_NOT_PRESENT) _bridgeUID = "";
 #endif
                 return;
             }

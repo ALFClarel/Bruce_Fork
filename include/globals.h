@@ -1,5 +1,6 @@
 #ifndef __GLOBALS__
 #define __GLOBALS__
+#include <atomic>
 
 #include <precompiler_flags.h>
 
@@ -230,7 +231,6 @@ extern volatile int EncoderLedChange;
 
 // Net pending rotary encoder steps, independent from NextPress/PrevPress,
 // so a consumer can apply a whole backlog at once instead of one per redraw.
-#include <atomic>
 extern std::atomic<int32_t> RotaryNetSteps;
 
 #ifdef HAS_ENCODER

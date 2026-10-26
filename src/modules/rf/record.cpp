@@ -82,12 +82,23 @@ void rf_raw_record_draw(RawRecordingStatus status) {
     }
 }
 
+#include <esp_heap_caps.h>
+static void *rfCaptureAlloc(size_t bytes) {
+#ifdef BRUCE_TEMBED_BASE
+    // Stored copies, not the RMT/DMA receive buffer: preserve internal radio memory.
+    return heap_caps_malloc_prefer(bytes, 2, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT,
+                                   MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+#else
+    return malloc(bytes);
+#endif
+}
+
 static size_t rf_durations_to_rmt_symbols(const std::vector<int> &durations, rmt_symbol_word_t **out) {
     *out = nullptr;
     if (durations.empty()) return 0;
 
     size_t symbolCount = (durations.size() + 1) / 2;
-    rmt_symbol_word_t *code = (rmt_symbol_word_t *)malloc(symbolCount * sizeof(rmt_symbol_word_t));
+    rmt_symbol_word_t *code = (rmt_symbol_word_t *)rfCaptureAlloc(symbolCount * sizeof(rmt_symbol_word_t));
     if (code == nullptr) return 0;
 
     for (size_t i = 0; i < symbolCount; i++) {
@@ -329,8 +340,12 @@ void rf_raw_record_create(RawRecording &recorded, bool &returnToMenu) {
             bool valid_signal = false;
             if (rx_size >= 5) valid_signal = true;
             if (valid_signal) {         // ignore codes shorter than 5 items
-                rmt_symbol_word_t *code = (rmt_symbol_word_t *)malloc(rx_size * sizeof(rmt_symbol_word_t));
+                rmt_symbol_word_t *code = (rmt_symbol_word_t *)rfCaptureAlloc(rx_size * sizeof(rmt_symbol_word_t));
 
+                if (!code) {
+                    displayError("Capture memory full");
+                    break;
+                }
                 // Gap calculation
                 unsigned long long signalDuration = 0;
                 for (size_t i = 0; i < rx_size; i++) {

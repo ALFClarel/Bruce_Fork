@@ -24,3 +24,11 @@ lib/mquickjs_headers/mqjs_stdlib_generator.exe
 .github/agents/Bruce-AI.agent.md
 .idea
 .ai
+
+# Local validation / self-hostable build outputs
+__pycache__/
+*.pyc
+/dist/
+/artifacts/
+/build.log
+/size-report.json

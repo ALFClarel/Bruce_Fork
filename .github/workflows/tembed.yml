@@ -13,6 +13,10 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [upstream, trimmed]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -29,20 +33,62 @@ jobs:
           path: |
             ~/.platformio
             .pio/libdeps
-          key: tembed-${{ runner.os }}-${{ hashFiles('platformio.ini', 'boards/lilygo-t-embed-cc1101/*.ini') }}
-      - name: Build the only supported target
+          key: tembed-${{ matrix.variant }}-${{ runner.os }}-${{ hashFiles('platformio.ini', 'boards/lilygo-t-embed-cc1101/*.ini') }}
+      - name: Verify hardware boundaries and policy
+        if: matrix.variant == 'trimmed'
+        run: python tools/check_tembed.py
+      - name: Select source revision
+        run: |
+          if [ '${{ matrix.variant }}' = upstream ]; then
+            git worktree add --detach /tmp/bruce-upstream a59213f3ec6cd302fa32c2042b2700c9c24d991a
+            echo 'BUILD_SOURCE=/tmp/bruce-upstream' >> "$GITHUB_ENV"
+          else
+            echo "BUILD_SOURCE=$GITHUB_WORKSPACE" >> "$GITHUB_ENV"
+          fi
+      - name: Build the one target
         run: |
           set -o pipefail
-          python -m platformio run -e lilygo-t-embed-cc1101 2>&1 | tee build.log
+          start=$(date +%s)
+          python -m platformio run -d "$BUILD_SOURCE" -e lilygo-t-embed-cc1101 2>&1 | tee build.log
+          echo "$(( $(date +%s) - start ))" > build-seconds.txt
+          python tools/tembed_size.py "$BUILD_SOURCE/.pio/build/lilygo-t-embed-cc1101" --out size-report.json
+      - name: Prepare merged flash image and OTA image
+        if: matrix.variant == 'trimmed'
+        run: python tools/package_tembed.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: tembed-${{ github.sha }}
+          name: tembed-${{ matrix.variant }}-${{ github.sha }}
           path: |
             build.log
+            build-seconds.txt
+            size-report.json
             .pio/build/lilygo-t-embed-cc1101/firmware.elf
-            .pio/build/lilygo-t-embed-cc1101/firmware.bin
-            .pio/build/lilygo-t-embed-cc1101/bootloader.bin
-            .pio/build/lilygo-t-embed-cc1101/partitions.bin
-            Bruce-lilygo-t-embed-cc1101.bin
+            dist/tembed/
           retention-days: 30
+  size-gate:
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: tembed-*-${{ github.sha }}
+          path: reports
+      - name: Require smaller binary and no additional static DRAM
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          reports = {kind: json.loads(next(Path('reports').glob(f'tembed-{kind}-*/size-report.json')).read_text())['target'] for kind in ['upstream', 'trimmed']}
+          delta = {key: reports['trimmed'][key] - reports['upstream'][key] for key in ['firmware_bytes', 'static_dram_bytes', 'iram_bytes']}
+          Path('size-delta.json').write_text(json.dumps({'measurements': reports, 'delta_bytes': delta}, indent=2))
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
+              summary.write('### Measured size delta (trimmed minus upstream)\n\n' + '\n'.join(f'- {key}: {value:+,} bytes' for key, value in delta.items()))
+          assert delta['firmware_bytes'] < 0, 'Firmware did not shrink'
+          assert delta['static_dram_bytes'] <= 0, 'Static DRAM increased'
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tembed-size-delta-${{ github.sha }}
+          path: size-delta.json

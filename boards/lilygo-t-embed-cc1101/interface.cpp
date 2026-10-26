@@ -131,7 +131,7 @@ int getBattery() {
         if (soc <= 100 && mv >= 2500 && mv <= 5000) {
             percent = soc;
             observeBattery(soc, mv, bq.getIsCharging());
-        }
+        } else percent = -1;
     }
     return percent; // -1 means unknown; 0% is real and must be drawn
 #else

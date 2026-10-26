@@ -41,8 +41,10 @@ struct wifi_header_t {
 static const uint8_t DEAUTH_REASONS[] = {0x01, 0x04, 0x06, 0x07, 0x08, 0x0A, 0x0D, 0x0F, 0x12, 0x28};
 static const int DEAUTH_REASON_COUNT = sizeof(DEAUTH_REASONS) / sizeof(DEAUTH_REASONS[0]);
 
+#ifndef BRUCE_WIFI_24GHZ_ONLY
 static const uint8_t DEAUTH_REASONS_5GHZ[] = {0x30, 0x31, 0x32, 0x33, 0x34, 0x07, 0x08, 0x0A, 0x0D, 0x0F};
 static const int DEAUTH_REASONS_5GHZ_COUNT = sizeof(DEAUTH_REASONS_5GHZ) / sizeof(DEAUTH_REASONS_5GHZ[0]);
+#endif
 
 struct APInfo {
     uint8_t bssid[6];
@@ -181,10 +183,14 @@ bool macCompare(const uint8_t *mac1, const uint8_t *mac2) {
 }
 
 int getWiFiBand(int channel) {
+#ifdef BRUCE_WIFI_24GHZ_ONLY
+    return 0;
+#else
     if (channel >= 1 && channel <= 14) return 0;
     else if (channel >= 36 && channel <= 165) return 1;
     else if (channel >= 1 && channel <= 233) return 2;
     return 0;
+#endif
 }
 
 void cacheSameSSIDAPs() {
@@ -197,6 +203,11 @@ void cacheSameSSIDAPs() {
             APInfo info;
             memcpy(info.bssid, WiFi.BSSID((uint8_t)i), 6);
             info.channel = WiFi.channel((uint8_t)i);
+#ifdef BRUCE_WIFI_24GHZ_ONLY
+            info.band = 0;
+            info.is_5ghz = false;
+            info.frequency = info.channel == 14 ? 2484 : 2407 + info.channel * 5;
+#else
             info.band = getWiFiBand(info.channel);
             info.is_5ghz = (info.band == 1 || info.band == 2);
             if (info.band == 1) {
@@ -206,6 +217,7 @@ void cacheSameSSIDAPs() {
             } else {
                 info.frequency = 2407 + info.channel * 5;
             }
+#endif
             sameSSID_APs.push_back(info);
         }
     }
@@ -213,10 +225,12 @@ void cacheSameSSIDAPs() {
 }
 
 const uint8_t *getDeauthReasons(int band, int *count) {
+#ifndef BRUCE_WIFI_24GHZ_ONLY
     if (band == 1 || band == 2) {
         *count = DEAUTH_REASONS_5GHZ_COUNT;
         return DEAUTH_REASONS_5GHZ;
     }
+#endif
     *count = DEAUTH_REASON_COUNT;
     return DEAUTH_REASONS;
 }
@@ -403,9 +417,14 @@ void stationDeauth(Host host, const uint8_t *apBssidIn) {
     }
 
     int band = getWiFiBand(channel);
+#ifdef BRUCE_WIFI_24GHZ_ONLY
+    constexpr bool is_5ghz = false;
+#else
     bool is_5ghz = (band == 1 || band == 2);
+#endif
     cacheSameSSIDAPs();
     bool useMultipleAPs = sameSSID_APs.size() > 1;
+#ifndef BRUCE_WIFI_24GHZ_ONLY
     std::vector<APInfo> ap_24ghz, ap_5ghz, ap_6ghz;
     for (auto &ap : sameSSID_APs) {
         switch (ap.band) {
@@ -417,6 +436,9 @@ void stationDeauth(Host host, const uint8_t *apBssidIn) {
     bool has_multiple_bands = (ap_24ghz.size() > 0 && ap_5ghz.size() > 0) ||
                               (ap_24ghz.size() > 0 && ap_6ghz.size() > 0) ||
                               (ap_5ghz.size() > 0 && ap_6ghz.size() > 0);
+#else
+    constexpr bool has_multiple_bands = false;
+#endif
 
     if (!initializeDeauthMode(channel, savedState)) {
         restoreWiFiState(savedState);
@@ -436,7 +458,11 @@ void stationDeauth(Host host, const uint8_t *apBssidIn) {
     tft.setTextSize(FP);
     padprintln("Target: " + host.mac);
     padprintln("AP: " + macToString(apBSSID));
+#ifdef BRUCE_WIFI_24GHZ_ONLY
+    String bandStr = "2.4GHz";
+#else
     String bandStr = (band == 1) ? "5GHz" : (band == 2) ? "6GHz" : "2.4GHz";
+#endif
     padprintln("CH:" + String(channel) + " (" + bandStr + ")");
     padprintln("Mode: AP");
     if (useMultipleAPs) { padprintln("Mesh: " + String(sameSSID_APs.size()) + " APs"); }
@@ -467,6 +493,7 @@ void stationDeauth(Host host, const uint8_t *apBssidIn) {
             current_reason = reasons[reason_index];
         }
 
+#ifndef BRUCE_WIFI_24GHZ_ONLY
         if (useMultipleAPs && has_multiple_bands) {
             int band_cycle = (cont / 4) % 3;
             APInfo *target_ap = nullptr;
@@ -495,7 +522,9 @@ void stationDeauth(Host host, const uint8_t *apBssidIn) {
                 total_frames += 12;
                 burst_counter++;
             }
-        } else if (useMultipleAPs) {
+        } else
+#endif
+        if (useMultipleAPs) {
             ap_index = (ap_index + 1) % sameSSID_APs.size();
             APInfo &current_ap = sameSSID_APs[ap_index];
             esp_wifi_set_channel(current_ap.channel, WIFI_SECOND_CHAN_NONE);
@@ -712,7 +741,11 @@ void runDeauthAll(uint8_t *targetMAC, int channel) {
     drawMainBorderWithTitle("Deauth All");
     tft.setTextSize(FP);
     padprintln("Deauthing all clients...");
+#ifdef BRUCE_WIFI_24GHZ_ONLY
+    String bandStr = "2.4GHz";
+#else
     String bandStr = (band == 1) ? "5GHz" : (band == 2) ? "6GHz" : "2.4GHz";
+#endif
     padprintln("Channel: " + String(channel) + " (" + bandStr + ")");
     padprintln("Mode: AP");
     if (useMultipleAPs) { padprintln("Mesh: " + String(sameSSID_APs.size()) + " APs"); }
@@ -857,7 +890,11 @@ void deauthAllByChannel() {
 
     options.clear();
     for (int ch = 1; ch <= 14; ch++) {
+#ifdef BRUCE_WIFI_24GHZ_ONLY
+        String band = "2.4GHz";
+#else
         String band = (ch >= 1 && ch <= 11) ? "2.4GHz" : (ch >= 36 ? "5GHz" : "2.4GHz");
+#endif
         String optionText = "Channel " + String(ch) + " (" + band + ")";
         options.push_back({optionText.c_str(), [=]() {
                                uint8_t broadcast_mac[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
@@ -907,7 +944,11 @@ void runDeauthTargetList(const std::vector<Host> &targets, uint8_t *targetMAC, i
     drawMainBorderWithTitle("Deauth List");
     tft.setTextSize(FP);
     padprintln("Deauthing " + String(targets.size()) + " targets...");
+#ifdef BRUCE_WIFI_24GHZ_ONLY
+    String bandStr = "2.4GHz";
+#else
     String bandStr = (band == 1) ? "5GHz" : (band == 2) ? "6GHz" : "2.4GHz";
+#endif
     padprintln("Channel: " + String(channel) + " (" + bandStr + ")");
     padprintln("Mode: AP");
     if (useMultipleAPs) { padprintln("Mesh: " + String(sameSSID_APs.size()) + " APs"); }

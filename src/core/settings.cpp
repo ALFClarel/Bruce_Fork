@@ -29,12 +29,13 @@ void _setBrightness(uint8_t brightval) {}
 **********************************************************************/
 void setBrightness(uint8_t brightval, bool save) {
     if (bruceConfig.bright > 100) bruceConfig.setBright(100);
+    uint8_t requestedBrightness = brightval;
     brightval = powerBrightnessLimit(brightval);
     _setBrightness(brightval);
     delay(10);
 
     currentScreenBrightness = brightval;
-    if (save) { bruceConfig.setBright(brightval); }
+    if (save) { bruceConfig.setBright(requestedBrightness); }
 }
 
 /*********************************************************************
