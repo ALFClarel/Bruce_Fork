@@ -18,4 +18,26 @@ inline uint8_t signalPercent(int value, int floor, int ceiling) {
     if (value >= ceiling) return 100;
     return uint8_t((value - floor) * 100 / (ceiling - floor));
 }
+enum class PowerLevel : uint8_t { Normal, Low, Critical };
+struct BatteryPolicy {
+    PowerLevel level = PowerLevel::Normal;
+    PowerLevel candidate = PowerLevel::Normal;
+    uint8_t samples = 0;
+    bool observe(unsigned percent, unsigned millivolts, bool charging) {
+        if (percent > 100 || millivolts < 2500 || millivolts > 5000) return false;
+        PowerLevel next = PowerLevel::Normal;
+        if (!charging) {
+            if (percent <= 5 || millivolts <= 3300 ||
+                (level == PowerLevel::Critical && (percent < 8 || millivolts < 3450)))
+                next = PowerLevel::Critical;
+            else if (percent <= 15 || millivolts <= 3500 ||
+                     (level == PowerLevel::Low && (percent < 20 || millivolts < 3600)))
+                next = PowerLevel::Low;
+        }
+        if (next != candidate) { candidate = next; samples = 0; }
+        if (samples < 3) ++samples;
+        if (samples == 3) level = candidate;
+        return true;
+    }
+};
 } // namespace tembed

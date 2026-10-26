@@ -919,8 +919,8 @@ void drawSubmenu(int index, std::vector<Option> &options, const char *title) {
 }
 
 void drawStatusBar() {
-    uint8_t bat = getBattery();
-    if (bat > 0) drawBatteryStatus(bat);
+    int bat = getBattery();
+    if (bat >= 0 && bat <= 100) drawBatteryStatus(uint8_t(bat));
 
     if (bruceConfig.theme.border) {
         tft.drawRoundRect(5, 5, tftWidth - 10, tftHeight - 10, 5, bruceConfig.priColor);
@@ -1072,7 +1072,7 @@ void printCenterFootnote(const String &text) {
 }
 
 void drawBatteryStatus(uint8_t bat) {
-    if (bat == 0) return;
+    if (bat > 100) return;
 
     bool charging = isCharging();
 
@@ -1090,7 +1090,14 @@ void drawBatteryStatus(uint8_t bat) {
         tft.setTextColor(bruceConfig.priColor, bruceConfig.bgColor);
         tft.drawRightString((bat == 100 ? "" : " ") + String(bat) + "%", tftWidth - 44, 12, 1);
     }
-    tft.fillRoundRect(tftWidth - 40, 9, 30 * bat / 100, 13, 2, barcolor);
+    tft.fillRect(tftWidth - 40, 9, 30, 13, bruceConfig.bgColor);
+    if (bat) tft.fillRoundRect(tftWidth - 40, 9, 30 * bat / 100, 13, 2, barcolor);
+#ifdef BRUCE_TEMBED_BASE
+    if (!charging && bat <= 5) {
+        tft.setTextColor(TFT_RED, bruceConfig.bgColor);
+        tft.drawRightString("LOW " + String(bat) + "%", tftWidth - 44, 12, 1);
+    }
+#endif
     tft.drawLine(tftWidth - 30, 9, tftWidth - 30, 9 + 13, bruceConfig.bgColor);
     tft.drawLine(tftWidth - 20, 9, tftWidth - 20, 9 + 13, bruceConfig.bgColor);
 }

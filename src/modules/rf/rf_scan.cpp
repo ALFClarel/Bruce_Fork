@@ -1,3 +1,4 @@
+#include "core/powerSave.h"
 #include "rf_scan.h"
 #include "core/led_control.h"
 #include "core/sd_functions.h"
@@ -180,6 +181,7 @@ void RFScan::init_freqs() {
 }
 
 bool RFScan::fast_scan() {
+    powerScanYield();
 
     if (idx < range_limits[bruceConfigPins.rfScanRange][0] ||
         idx > range_limits[bruceConfigPins.rfScanRange][1]) {

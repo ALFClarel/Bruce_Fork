@@ -119,9 +119,25 @@ void _setup_gpio() {
 ***************************************************************************************/
 #if defined(USE_BQ27220_VIA_I2C)
 int getBattery() {
-    int percent = 0;
-    percent = bq.getChargePcnt();
-    return (percent < 0) ? 1 : (percent >= 100) ? 100 : percent;
+#ifdef BRUCE_TEMBED_BASE
+    static int percent = -1;
+    static uint32_t sampled = 0;
+    static bool first = true;
+    if (first || millis() - sampled >= 5000) {
+        first = false;
+        sampled = millis();
+        unsigned soc = bq.getChargePcnt();
+        unsigned mv = bq.getVolt(VOLT);
+        if (soc <= 100 && mv >= 2500 && mv <= 5000) {
+            percent = soc;
+            observeBattery(soc, mv, bq.getIsCharging());
+        }
+    }
+    return percent; // -1 means unknown; 0% is real and must be drawn
+#else
+    unsigned percent = bq.getChargePcnt();
+    return percent > 100 ? -1 : percent;
+#endif
 }
 #endif
 /*********************************************************************
@@ -129,6 +145,7 @@ int getBattery() {
 **  set brightness value
 **********************************************************************/
 void _setBrightness(uint8_t brightval) {
+    brightval = powerBrightnessLimit(brightval);
     if (brightval == 0) {
         analogWrite(TFT_BL, brightval);
     } else if (brightval > 99) {

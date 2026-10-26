@@ -1,3 +1,4 @@
+#include "core/powerSave.h"
 #include "ble_common.h"
 #include "core/led_control.h"
 #include "core/mykeyboard.h"
@@ -160,7 +161,8 @@ bool ble_scan_setup() {
     pBLEScan->setScanCallbacks(&g_scanCallbacks);
     pBLEScan->setActiveScan(true);
     pBLEScan->setInterval(SCAN_INT);
-    pBLEScan->setWindow(SCAN_WINDOW);
+    powerScanYield();
+    pBLEScan->setWindow(powerScanWindow(SCAN_WINDOW));
     pBLEScan->setDuplicateFilter(false);
 
     esp_read_mac(sta_mac, ESP_MAC_BT);

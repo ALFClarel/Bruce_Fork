@@ -1,6 +1,33 @@
 #include "powerSave.h"
 #include "display.h"
 #include "settings.h"
+#ifdef BRUCE_TEMBED_BASE
+#include <atomic>
+#include <tembed_policy.h>
+static std::atomic<tembed::PowerLevel> powerLevel{tembed::PowerLevel::Normal};
+void observeBattery(unsigned percent, unsigned millivolts, bool charging) {
+    static tembed::BatteryPolicy policy;
+    if (policy.observe(percent, millivolts, charging)) powerLevel.store(policy.level);
+}
+uint8_t powerBrightnessLimit(uint8_t requested) {
+    auto level = powerLevel.load();
+    uint8_t limit = level == tembed::PowerLevel::Critical ? 10 :
+                    level == tembed::PowerLevel::Low ? 35 : 100;
+    return min(requested, limit);
+}
+bool powerBatteryCritical() { return powerLevel.load() == tembed::PowerLevel::Critical; }
+uint16_t powerScanWindow(uint16_t requested) {
+    auto level = powerLevel.load();
+    return min(requested, uint16_t(level == tembed::PowerLevel::Critical ? 10 :
+                                  level == tembed::PowerLevel::Low ? 25 : requested));
+}
+void powerScanYield() {
+    getBattery(); // existing foreground API, internally cached; never poll I2C from input task
+    auto level = powerLevel.load();
+    if (level != tembed::PowerLevel::Normal)
+        vTaskDelay(pdMS_TO_TICKS(level == tembed::PowerLevel::Critical ? 40 : 15));
+}
+#endif
 
 /* Check if it's time to put the device to sleep */
 #define SCREEN_OFF_DELAY 5000
@@ -14,6 +41,12 @@ void fadeOutScreen(int startValue) {
 }
 
 void checkPowerSaveTime() {
+#ifdef BRUCE_TEMBED_BASE
+    if (!isScreenOff && !isSleeping && !dimmer) {
+        uint8_t effective = powerBrightnessLimit(bruceConfig.bright);
+        if (effective != currentScreenBrightness) setBrightness(effective, false);
+    }
+#endif
     if (bruceConfig.dimmerSet == 0) return;
 
     unsigned long elapsed = millis() - previousMillis;

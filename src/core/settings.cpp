@@ -1,3 +1,4 @@
+#include "core/powerSave.h"
 #include "settings.h"
 #include "core/led_control.h"
 #include "core/wifi/wifi_common.h"
@@ -28,6 +29,7 @@ void _setBrightness(uint8_t brightval) {}
 **********************************************************************/
 void setBrightness(uint8_t brightval, bool save) {
     if (bruceConfig.bright > 100) bruceConfig.setBright(100);
+    brightval = powerBrightnessLimit(brightval);
     _setBrightness(brightval);
     delay(10);
 
