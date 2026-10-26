@@ -20,6 +20,12 @@
 CRGB hsvToRgb(uint16_t h, uint8_t s, uint8_t v);
 uint32_t alterOneColorChannel(uint32_t color, uint16_t newR, uint16_t newG, uint16_t newB);
 
+// Publish a sample only: the existing LED task owns rendering (BLE callbacks are safe).
+#ifdef BRUCE_TEMBED_BASE
+void signalMeter(int value, int floor = -100, int ceiling = -30);
+#else
+inline void signalMeter(int value, int floor = -100, int ceiling = -30) {}
+#endif
 void beginLed();
 void blinkLed(int blinkTime = 50);
 
@@ -41,6 +47,7 @@ void setLedBrightnessConfig();
 
 #else
 inline void blinkLed(int blinkTime = 50) {};
+inline void signalMeter(int value, int floor = -100, int ceiling = -30) {}
 #endif
 
 #endif

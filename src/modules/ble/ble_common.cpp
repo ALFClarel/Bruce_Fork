@@ -1,4 +1,5 @@
 #include "ble_common.h"
+#include "core/led_control.h"
 #include "core/mykeyboard.h"
 #include "core/radio_mem.h"
 #include "core/ram_profile.h"
@@ -80,7 +81,11 @@ void ble_info(const String &name, const String &address, const String &signal) {
     }
 }
 
-class AdvertisedDeviceCallbacks : public NimBLEScanCallbacks {};
+class AdvertisedDeviceCallbacks : public NimBLEScanCallbacks {
+    void onResult(const NimBLEAdvertisedDevice *device) override {
+        signalMeter(device->getRSSI());
+    }
+};
 
 static AdvertisedDeviceCallbacks g_scanCallbacks;
 

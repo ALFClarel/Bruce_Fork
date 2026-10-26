@@ -1,3 +1,4 @@
+#include "core/led_control.h"
 #include "rf_spectrum.h"
 #include "protocols/rf_config.h"
 #include "protocols/rf_decoder.h"
@@ -249,6 +250,7 @@ void rf_CC1101_rssi() {
         // draw dot graph for fixed frequency
         if (bruceConfigPins.rfFxdFreq) {
             int rssi = ELECHOUSE_cc1101.getRssi();
+            signalMeter(rssi, -110, -25);
             tft.drawPixel(0, 0, 0); // To make sure CC1101 shared with TFT works properly
             const int base_y = tftHeight - 120;
             int prev = signal[0];
@@ -282,6 +284,7 @@ void rf_CC1101_rssi() {
                 setMHZ(subghz_frequency_list[range_limits[bruceConfigPins.rfScanRange][0] + i]);
                 vTaskDelay(pdMS_TO_TICKS(5));
                 int rssi = ELECHOUSE_cc1101.getRssi();
+            signalMeter(rssi, -110, -25);
                 tft.drawPixel(0, 0, 0); // To make sure CC1101 shared with TFT works properly
                 int size = map(rssi, -95, -20, 0, max_bar_size);
                 if (size > bar_size[i]) bar_size[i] = size;

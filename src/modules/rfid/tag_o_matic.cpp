@@ -1,3 +1,4 @@
+#include "core/led_control.h"
 /**
  * @file tag_o_matic.cpp
  * @author Rennan Cockles (https://github.com/rennancockles)
@@ -340,6 +341,7 @@ void TagOMatic::read_card() {
     display_banner();
     dump_card_details();
 
+    signalMeter(100, 0, 100); // binary tag-read success; PN532 exposes no RSSI
     _read_uid = true;
     _lastReadTime = millis();
     delayWithReturn(500);
@@ -347,6 +349,7 @@ void TagOMatic::read_card() {
 
 void TagOMatic::scan_cards() {
     if (_rfid->read() != RFIDInterface::SUCCESS) return;
+    signalMeter(100, 0, 100);
 
     if (_scanned_set.find(_rfid->printableUID.uid) == _scanned_set.end()) {
         // Serial.println("New tag found: " + _rfid->printableUID.uid);
@@ -364,6 +367,7 @@ void TagOMatic::check_card() {
     if (millis() - _lastReadTime < 2000) return;
 
     if (_rfid->read() != RFIDInterface::SUCCESS) return;
+    signalMeter(100, 0, 100);
 
     display_banner();
     dump_check_details();

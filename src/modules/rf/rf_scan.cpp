@@ -67,7 +67,16 @@ void RFScan::setup() {
 }
 
 void RFScan::loop() {
+#ifdef BRUCE_TEMBED_BASE
+    uint32_t lastMeterMs = 0;
+#endif
     while (1) {
+#ifdef BRUCE_TEMBED_BASE
+        if (millis() - lastMeterMs >= 100) {
+            signalMeter(ELECHOUSE_cc1101.getRssi(), -110, -25);
+            lastMeterMs = millis();
+        }
+#endif
         if (EscPress || exitRequested) {
             RF_DBG("RFScan exit: esc=%d exitRequested=%d", (int)EscPress, (int)exitRequested);
             check(EscPress);
@@ -181,6 +190,7 @@ bool RFScan::fast_scan() {
     tft.drawPixel(0, 0, 0); // To make sure CC1101 shared with TFT works properly
     vTaskDelay(5 / portTICK_PERIOD_MS);
     rssi = ELECHOUSE_cc1101.getRssi();
+    signalMeter(rssi, -110, -25);
     if (rssi > rssiThreshold) {
         _freqs[_try].freq = checkFrequency;
         _freqs[_try].rssi = rssi;
@@ -790,6 +800,7 @@ String rf_scan(float start_freq, float stop_freq, int max_loops) {
         setMHZ(freq);
 
         rssi = ELECHOUSE_cc1101.getRssi();
+    signalMeter(rssi, -110, -25);
         if (rssi > -75) {
             if (rssi > mark_rssi) {
                 mark_rssi = rssi;

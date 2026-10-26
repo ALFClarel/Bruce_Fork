@@ -13,6 +13,21 @@
 #include <freertos/task.h>
 
 CRGB leds[LED_COUNT];
+#ifdef BRUCE_TEMBED_BASE
+#include <atomic>
+#include <tembed_policy.h>
+// One atomic message: 24-bit 50ms epoch + 8-bit percent. Wrap safe for 9 days.
+static std::atomic<uint32_t> meterSample{0};
+void signalMeter(int value, int floor, int ceiling) {
+    meterSample.store(((millis() / 50) << 8) | tembed::signalPercent(value, floor, ceiling),
+                      std::memory_order_relaxed);
+}
+static int meterLevel() {
+    uint32_t sample = meterSample.load(std::memory_order_relaxed);
+    uint32_t age = ((millis() / 50) - (sample >> 8)) & 0xFFFFFF;
+    return sample && age < 20 ? int(sample & 0xFF) : -1;
+}
+#endif
 
 bool isPreviewLed = false;
 CRGB previewLedColor;
@@ -86,12 +101,50 @@ void ledEffectTask(void *pvParameters) {
     int currentLED = 0;
     int frame = 0;
     uint64_t start_time = esp_timer_get_time() / 1000;
+#ifdef BRUCE_TEMBED_BASE
+    int lastMeter = -1;
+    CRGB lastSolid = CRGB::Black;
+#endif
     while (1) {
         CRGB baseColor = isPreviewLed ? previewLedColor : bruceConfig.ledColor;
         int ledEffect = isPreviewLed ? previewLedEffect : bruceConfig.ledEffect;
         int ledEffectSpeed = isPreviewLed ? previewLedEffectSpeed : bruceConfig.ledEffectSpeed;
         int ledEffectDirection = isPreviewLed ? previewLedEffectDirection : bruceConfig.ledEffectDirection;
 
+#ifdef BRUCE_TEMBED_BASE
+        int level = meterLevel();
+        if (level >= 0) {
+            if (level != lastMeter) {
+                int count = (level * LED_COUNT + 99) / 100;
+                uint8_t brightness = uint8_t(min(64, (bruceConfig.ledBright * 255 / 100)));
+                FastLED.setBrightness(brightness);
+                for (int i = 0; i < LED_COUNT; ++i) {
+                    leds[i] = i < count ? hsvToRgb(120 - i * 120 / (LED_COUNT - 1), 255,
+                                                  32 + level * 223 / 100) : CRGB::Black;
+                }
+                FastLED.show();
+                lastMeter = level;
+            }
+            vTaskDelay(pdMS_TO_TICKS(50));
+            continue;
+        }
+        if (lastMeter >= 0) {
+            FastLED.setBrightness(bruceConfig.ledBright * 255 / 100);
+            fill_solid(leds, LED_COUNT, baseColor);
+            FastLED.show();
+            lastMeter = -1;
+            lastSolid = baseColor;
+        }
+        if (ledEffect == LED_EFFECT_SOLID) {
+            if (baseColor != lastSolid) {
+                fill_solid(leds, LED_COUNT, baseColor);
+                FastLED.show();
+                lastSolid = baseColor;
+            }
+            vTaskDelay(pdMS_TO_TICKS(50));
+            continue;
+        }
+#endif
         if (ledEffect == LED_EFFECT_COLOR_CYCLE || ledEffect == LED_EFFECT_COLOR_WHEEL) {
             short delayMs = 50;
 
@@ -292,6 +345,11 @@ void ledEffectTask(void *pvParameters) {
 }
 
 void beginLed() {
+#ifdef BRUCE_TEMBED_BASE
+    static bool initialized = false;
+    if (initialized) return;
+    initialized = true;
+#endif
 #ifdef RGB_LED_CLK
     FastLED.addLeds<LED_TYPE, RGB_LED, RGB_LED_CLK, LED_ORDER>(leds, LED_COUNT);
 #else
@@ -342,6 +400,9 @@ void beginLed() {
 }
 
 void blinkLed(int blinkTime) {
+#ifdef BRUCE_TEMBED_BASE
+    if (meterLevel() >= 0) return;
+#endif
     if (!bruceConfig.ledBlinkEnabled) return;
 
     int ledBrightFrom = bruceConfig.ledBright;
@@ -726,6 +787,10 @@ void setLedEffectDirectionConfig() {
 }
 
 void ledSetup() {
+#ifdef BRUCE_TEMBED_BASE
+    ledEffects(true); // Existing task handles meters and decorative effects; never create a second task.
+    return;
+#endif
     if (bruceConfig.ledEffect == LED_EFFECT_SOLID) { ledEffects(false); }
 
     if (bruceConfig.ledEffect > LED_EFFECT_SOLID) {
@@ -734,6 +799,9 @@ void ledSetup() {
 }
 
 void ledEffects(bool enable) {
+#ifdef BRUCE_TEMBED_BASE
+    enable = true; // keep sample consumer alive even when decorative effects are disabled
+#endif
     if (enable) {
         if (ledEffectTaskHandle == NULL) {
             xTaskCreate(ledEffectTask, "LedEffect", 2048, NULL, 1, &ledEffectTaskHandle);

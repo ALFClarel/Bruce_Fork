@@ -1,3 +1,4 @@
+#include "core/led_control.h"
 #include "core/wifi/wifi_common.h"
 #include "core/display.h"
 #include "core/mykeyboard.h"
@@ -206,6 +207,13 @@ bool wifiConnectMenu(wifi_mode_t mode) {
             do {
                 displayTextLine("Scanning..");
                 nets = WiFi.scanNetworks();
+                #ifdef BRUCE_TEMBED_BASE
+                {
+                    int strongest = -100;
+                    for (int i = 0; i < nets; ++i) strongest = max(strongest, int(WiFi.RSSI(i)));
+                    signalMeter(strongest);
+                }
+                #endif
 
                 String selSsid = "";
                 int selEnc = 0;
@@ -306,6 +314,13 @@ void wifiConnectTask(void *pvParameters) {
 
     WiFi.mode(WIFI_MODE_STA);
     int nets = WiFi.scanNetworks();
+    #ifdef BRUCE_TEMBED_BASE
+    {
+        int strongest = -100;
+        for (int i = 0; i < nets; ++i) strongest = max(strongest, int(WiFi.RSSI(i)));
+        signalMeter(strongest);
+    }
+    #endif
     String ssid;
     String pwd;
 
@@ -366,6 +381,13 @@ bool wifiConnecttoKnownNet(void) {
     WiFi.disconnect(true, true);
     vTaskDelay(10 / portTICK_PERIOD_MS);
     nets = WiFi.scanNetworks();
+    #ifdef BRUCE_TEMBED_BASE
+    {
+        int strongest = -100;
+        for (int i = 0; i < nets; ++i) strongest = max(strongest, int(WiFi.RSSI(i)));
+        signalMeter(strongest);
+    }
+    #endif
     for (int i = 0; i < nets; i++) {
         vTaskDelay(10 / portTICK_PERIOD_MS);
         String ssid = WiFi.SSID(i);

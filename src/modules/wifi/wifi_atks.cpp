@@ -1,3 +1,4 @@
+#include "core/led_control.h"
 // Borrowed from https://github.com/justcallmekoko/ESP32Marauder/
 // Learned from https://github.com/risinek/esp32-wifi-penetration-tool/
 // Arduino IDE needs to be tweeked to work, follow the instructions:
@@ -265,6 +266,13 @@ void wifi_atk_menu() {
         int nets;
         displayTextLine("Scanning..");
         nets = WiFi.scanNetworks(false, showHiddenNetworks);
+        #ifdef BRUCE_TEMBED_BASE
+        {
+            int strongest = -100;
+            for (int i = 0; i < nets; ++i) strongest = max(strongest, int(WiFi.RSSI(i)));
+            signalMeter(strongest);
+        }
+        #endif
         ap_records.clear();
         options = {};
         for (int i = 0; i < nets; i++) {
@@ -336,6 +344,13 @@ void deauthFloodAttack() {
 ScanNets:
     displayTextLine("Scanning..");
     nets = WiFi.scanNetworks(false, showHiddenNetworks);
+    #ifdef BRUCE_TEMBED_BASE
+    {
+        int strongest = -100;
+        for (int i = 0; i < nets; ++i) strongest = max(strongest, int(WiFi.RSSI(i)));
+        signalMeter(strongest);
+    }
+    #endif
     ap_records.clear();
     for (int i = 0; i < nets; i++) {
         wifi_ap_record_t record;
