@@ -60,12 +60,16 @@ void sendCustomRF() {
 
         if (!readSubFile(filesystem, filepath, data)) continue;
 
+#ifdef BRUCE_TEMBED_BASE
+        loopEmulate(data);
+#else
         if (data.protocol == "RcSwitch") {
             loopEmulate(data);
         } else {
             txSubFile(data);
             delay(200);
         }
+#endif
     }
 }
 
@@ -152,7 +156,28 @@ void keeloq_save(RfCodes data) {
     file.close();
 }
 
+#ifdef BRUCE_TEMBED_BASE
+static size_t selectedFrame = 0;
+static size_t subFrameCount() { return keyList.size() + rawDataList.size(); }
+static void selectSubFrame(RfCodes &data) {
+    if (selectedFrame < keyList.size()) {
+        data.key = keyList[selectedFrame];
+        if (selectedFrame < bitList.size()) data.Bit = bitList[selectedFrame];
+    } else {
+        size_t raw = selectedFrame - keyList.size();
+        if (raw < rawDataList.size()) data.data = rawDataList[raw];
+        if (raw < bitRawList.size()) data.Bit = bitRawList[raw];
+    }
+}
+#endif
+
 void loopEmulate(RfCodes &data) {
+#ifdef BRUCE_TEMBED_BASE
+    selectedFrame = 0;
+    drainRotarySteps();
+    if (!subFrameCount()) return;
+    selectSubFrame(data);
+#endif
     if (data.serial != 0) {
         data.fix = data.btn << 28 | data.serial;
         data.Bit = 64;
@@ -165,10 +190,23 @@ void loopEmulate(RfCodes &data) {
         if (check(EscPress)) {
             keyList.clear();
             bitList.clear();
+            bitRawList.clear();
+            rawDataList.clear();
+            deinitRfModule();
 
             return;
         }
 
+#ifdef BRUCE_TEMBED_BASE
+        int32_t jog = drainRotarySteps();
+        NextPress = PrevPress = false;
+        if (jog && subFrameCount()) {
+            int64_t next = int64_t(selectedFrame) - jog;
+            selectedFrame = size_t(constrain(next, int64_t(0), int64_t(subFrameCount() - 1)));
+            selectSubFrame(data);
+            display_info(data);
+        }
+#else
         if (check(NextPress)) {
             select_menu_option(data.serial != 0);
 
@@ -182,9 +220,18 @@ void loopEmulate(RfCodes &data) {
             display_info(data);
         }
 
+#endif
         if (check(SelPress)) {
             blinkLed();
 
+#ifdef BRUCE_TEMBED_BASE
+            sendRfCommand(data);
+            if (data.serial != 0) {
+                data.keeloq_step(num_steps_keeloq);
+                keeloq_save(data);
+            }
+            display_info(data);
+#else
             if (data.serial == 0) {
                 for (int i = 0; uint64_t key : keyList) {
                     data.Bit = bitList[i++];
@@ -197,6 +244,7 @@ void loopEmulate(RfCodes &data) {
                 keeloq_save(data);
                 display_info(data);
             }
+#endif
         }
         vTaskDelay(pdMS_TO_TICKS(1));
     }
@@ -225,10 +273,19 @@ void display_info(RfCodes &data) {
     } else {
         padprintln("Protocol: " + String(data.protocol) + "(" + data.preset + ")");
 
+#ifdef BRUCE_TEMBED_BASE
+        padprintln("Record " + String(selectedFrame + 1) + "/" + String(subFrameCount()));
+        padprintln("Turn: jog | OK: transmit | Back: exit");
+        if (selectedFrame < keyList.size()) {
+            decimalToHexString(data.key, hexString);
+            padprintln("Key: " + String(hexString));
+        } else padprintln("RAW segment (not necessarily a packet)");
+#else
         for (uint64_t key : keyList) {
             decimalToHexString(key, hexString);
             padprintln("Key: " + String(hexString));
         }
+#endif
     }
 
     padprintln("");
@@ -243,6 +300,7 @@ bool readSubFile(FS *fs, const String &filepath, RfCodes &data) {
     String line;
     String txt;
 
+    bitList.clear(); bitRawList.clear(); keyList.clear(); rawDataList.clear();
     if (!fs) return false;
 
     databaseFile = fs->open(filepath, FILE_READ);

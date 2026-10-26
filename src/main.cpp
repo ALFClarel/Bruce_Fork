@@ -59,7 +59,7 @@ TouchPoint touchPoint;
 
 keyStroke KeyStroke;
 
-volatile int32_t RotaryNetSteps = 0;
+std::atomic<int32_t> RotaryNetSteps{0};
 
 #ifdef HAS_ENCODER
 // Default no-op: boards that define HAS_ENCODER but don't implement

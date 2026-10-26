@@ -30,6 +30,9 @@ uint64_t crc64_ecma(const std::vector<int> &data);
 void addToRecentCodes(struct RfCodes rfcode);
 struct RfCodes selectRecentRfMenu();
 bool setMHZMenu();
+#ifdef BRUCE_TEMBED_BASE
+bool rfTuneEncoder();
+#endif
 void rf_range_selection(float currentFrequency = 0.0);
 
 uint64_t reverse_bits(uint64_t num, uint8_t bits);

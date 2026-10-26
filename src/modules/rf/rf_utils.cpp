@@ -537,7 +537,26 @@ rmt_channel_handle_t setup_rf_rx() {
     return rx_channel;
 }
 
+#ifdef BRUCE_TEMBED_BASE
+#include <tembed_policy.h>
+bool rfTuneEncoder() {
+    int32_t steps = drainRotarySteps();
+    NextPress = PrevPress = false;
+    if (!steps) return false;
+    const int32_t current = lroundf(bruceConfigPins.rfFreq * 1000.0f);
+    const int32_t next = tembed::tuneKhz(current, steps);
+    if (next == current) return false;
+    bruceConfigPins.rfFreq = next / 1000.0f; // session only: never wear flash per detent
+    bruceConfigPins.rfFxdFreq = true;
+    setMHZ(bruceConfigPins.rfFreq); // existing band switch + receive setup
+    return true;
+}
+#endif
+
 bool setMHZMenu() {
+#ifdef BRUCE_TEMBED_BASE
+    if (rfTuneEncoder()) return true;
+#endif
     if (bruceConfigPins.rfModule != CC1101_SPI_MODULE) return false;
     if (check(SelPress)) {
         options = {};

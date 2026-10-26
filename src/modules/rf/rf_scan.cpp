@@ -42,6 +42,9 @@ RFScan::~RFScan() {
 
 void RFScan::setup() {
     rf_clear_nav_state();
+#ifdef BRUCE_TEMBED_BASE
+    drainRotarySteps();
+#endif
     returnToMenu = false;
     exitRequested = false;
 
@@ -70,7 +73,16 @@ void RFScan::loop() {
             check(EscPress);
             return;
         }
+#ifdef BRUCE_TEMBED_BASE
+        if (rfTuneEncoder()) {
+            frequency = bruceConfigPins.rfFreq;
+            enable_receive();
+            display_info(received, signals, ReadRAW, codesOnly, autoSave, title);
+        }
+        if (check(SelPress)) {
+#else
         if (check(NextPress)) {
+#endif
             select_menu_option();
             if (exitRequested) {
                 RF_DBG("RFScan exit after options");
@@ -94,7 +106,16 @@ void RFScan::loop() {
                 check(EscPress);
                 return;
             }
+#ifdef BRUCE_TEMBED_BASE
+            if (rfTuneEncoder()) {
+                frequency = bruceConfigPins.rfFreq;
+                enable_receive();
+                break;
+            }
+            if (check(SelPress)) {
+#else
             if (check(NextPress)) {
+#endif
                 select_menu_option();
                 if (exitRequested) {
                     RF_DBG("RFScan fast-scan exit after options");

@@ -27,6 +27,9 @@ void draw_tf_spectrum_grid() {
 }
 
 void rf_spectrum() {
+#ifdef BRUCE_TEMBED_BASE
+    drainRotarySteps();
+#endif
     tft.fillScreen(bruceConfig.bgColor);
     draw_tf_spectrum_grid();
     if (bruceConfigPins.rfModule == M5_RF_MODULE) {
@@ -183,6 +186,9 @@ PRINT:
 }
 
 void rf_CC1101_rssi() {
+#ifdef BRUCE_TEMBED_BASE
+    drainRotarySteps();
+#endif
 #if !defined(LITE_VERSION)
     if (bruceConfigPins.rfModule != CC1101_SPI_MODULE) {
         displayError("only for CC1101 module", true);
@@ -294,6 +300,9 @@ void rf_CC1101_rssi() {
                 tft.drawCentreString("Max=" + String(buf), tftWidth / 2, tftHeight - 10);
             }
         }
+#ifdef BRUCE_TEMBED_BASE
+        if (rfTuneEncoder()) redraw = true;
+#endif
         if (check(EscPress)) { break; }
         if (check(SelPress)) {
             deinitRfModule();
