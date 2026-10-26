@@ -14,6 +14,12 @@ void FileMenu::optionsMenu() {
     options.push_back({"WebUI", loopOptionsWebUi});
 
 #if !defined(LITE_VERSION)
+#ifdef BRUCE_TEMBED_BASE
+    options.push_back({"Send File", []() { FileSharing().sendFile(); }});
+    options.push_back({"Recv File", []() { FileSharing().receiveFile(); }});
+    options.push_back({"Send Cmds", []() { EspSerialCmd().sendCommands(); }});
+    options.push_back({"Recv Cmds", []() { EspSerialCmd().receiveCommands(); }});
+#else
     options.push_back({"Connect", [=]() {
         std::vector<Option> connectOpts = {
             {"Send File", [=]() { FileSharing().sendFile(); }        },
@@ -24,6 +30,7 @@ void FileMenu::optionsMenu() {
         };
         loopOptions(connectOpts, MENU_TYPE_SUBMENU, "Connect");
     }});
+#endif
 #endif
 
 #if defined(SOC_USB_OTG_SUPPORTED)

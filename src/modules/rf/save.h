@@ -2,5 +2,5 @@
 #define RF_SAVE_H
 #include "structs.h"
 
-bool rf_raw_save(RawRecording recorded);
+bool rf_raw_save(const RawRecording &recorded);
 #endif

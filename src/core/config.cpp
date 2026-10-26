@@ -1,4 +1,7 @@
 #include "config.h"
+#ifdef BRUCE_TEMBED_BASE
+#include "led_control.h"
+#endif
 #include "mifare_keys_manager.h"
 #include "sd_functions.h"
 #include <algorithm>
@@ -576,6 +579,9 @@ void BruceConfig::validateWifiAtStartupValue() {
 void BruceConfig::setLedBright(int value) {
     ledBright = value;
     validateLedBrightValue();
+#ifdef BRUCE_TEMBED_BASE
+    ledSetup();
+#endif
     saveFile();
 }
 
@@ -584,6 +590,9 @@ void BruceConfig::validateLedBrightValue() { ledBright = max(0, min(100, ledBrig
 void BruceConfig::setLedColor(uint32_t value) {
     ledColor = value;
     validateLedColorValue();
+#ifdef BRUCE_TEMBED_BASE
+    ledSetup();
+#endif
     saveFile();
 }
 
@@ -604,6 +613,9 @@ void BruceConfig::validateLedBlinkEnabledValue() {
 void BruceConfig::setLedEffect(int value) {
     ledEffect = value;
     validateLedEffectValue();
+#ifdef BRUCE_TEMBED_BASE
+    ledSetup();
+#endif
     saveFile();
 }
 
@@ -614,6 +626,9 @@ void BruceConfig::validateLedEffectValue() {
 void BruceConfig::setLedEffectSpeed(int value) {
     ledEffectSpeed = value;
     validateLedEffectSpeedValue();
+#ifdef BRUCE_TEMBED_BASE
+    ledSetup();
+#endif
     saveFile();
 }
 
@@ -629,6 +644,9 @@ void BruceConfig::validateLedEffectSpeedValue() {
 void BruceConfig::setLedEffectDirection(int value) {
     ledEffectDirection = value;
     validateLedEffectDirectionValue();
+#ifdef BRUCE_TEMBED_BASE
+    ledSetup();
+#endif
     saveFile();
 }
 

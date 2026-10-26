@@ -15,6 +15,70 @@
 **  Main Config menu entry point
 **********************************************************************/
 void ConfigMenu::optionsMenu() {
+#ifdef BRUCE_TEMBED_BASE
+    returnToMenu = false;
+    while (!returnToMenu) {
+        std::vector<Option> direct = {
+            {"Brightness", setBrightnessMenu},
+            {"Dim Time", setDimmerTimeMenu},
+            {"Orientation", lambdaHelper(gsetRotation, true)},
+            {"UI Color", setUIColor},
+            {"UI Theme", setTheme},
+            {"LED Color", setLedColorConfig},
+            {"LED Effect", setLedEffectConfig},
+            {"LED Speed", []() { ledPreviewMode(true); setLedEffectSpeedConfig(); ledPreviewMode(false); }},
+            {"LED Direction", []() { ledPreviewMode(true); setLedEffectDirectionConfig(); ledPreviewMode(false); }},
+            {"LED Brightness", setLedBrightnessConfig},
+            {String("LED Blink: ") + (bruceConfig.ledBlinkEnabled ? "ON" : "OFF"), []() {
+                bruceConfig.setLedBlinkEnabled(!bruceConfig.ledBlinkEnabled);
+            }},
+            {String("Sound: ") + (bruceConfig.soundEnabled ? "ON" : "OFF"), []() {
+                bruceConfig.setSoundEnabled(!bruceConfig.soundEnabled);
+            }},
+            {"Sound Volume", setSoundVolume},
+            {String("InstaBoot: ") + (bruceConfig.instantBoot ? "ON" : "OFF"), []() {
+                bruceConfig.instantBoot = !bruceConfig.instantBoot;
+                bruceConfig.saveFile();
+            }},
+            {String("WiFi Startup: ") + (bruceConfig.wifiAtStartup ? "ON" : "OFF"), []() {
+                bruceConfig.setWifiAtStartup(!bruceConfig.wifiAtStartup);
+            }},
+            {"Startup App", setStartupApp},
+            {"Hide/Show Apps", []() { mainMenu.hideAppsMenu(); }},
+            {"Clock", setClock},
+            {"Keyboard Language", setKeyboardLanguage},
+            {"Toggle BLE API", enableBLEAPI},
+            {"HID Layout", setBadUSBBLEKeyboardLayoutMenu},
+            {"HID Key Delay", setBadUSBBLEKeyDelayMenu},
+            {"HID Show Output", setBadUSBBLEShowOutputMenu},
+            {"BLE name", []() {
+                String name = keyboard(bruceConfigPins.bleName, 30, "BLE device name");
+                if (name.length() && name != "\x1B") bruceConfigPins.setBleName(name);
+            }},
+            {"Network Creds", setNetworkCredsMenu},
+            {"Deep Sleep", goToDeepSleep},
+            {"Sleep", setSleepMode},
+            {"Restart", []() { ESP.restart(); }},
+            {"Power Off", []() {
+                drawMainBorder(true);
+                if (displayMessage("Power Off Device?", "No", nullptr, "Yes", TFT_RED) == 1) powerOff();
+            }},
+            {"Factory Reset", []() {
+                drawMainBorder(true);
+                if (displayMessage("Factory Reset?\nAll settings will be lost!", "No", nullptr, "Yes", TFT_RED) == 1) {
+                    bruceConfigPins.factoryReset();
+                    bruceConfig.factoryReset();
+                }
+            }},
+            {"About", showDeviceInfo},
+        };
+        if (!appStoreInstalled()) direct.push_back({"Install App Store", installAppStoreJS});
+        direct.push_back({"Back", []() {}});
+        int selected = loopOptions(direct, MENU_TYPE_SUBMENU, "Config");
+        if (selected < 0 || selected == int(direct.size()) - 1) return;
+    }
+    return;
+#endif
     returnToMenu = false;
     while (true) {
         // Check if we need to exit to Main Menu (e.g., DevMode disabled)
@@ -193,7 +257,9 @@ void ConfigMenu::systemMenu() {
 void ConfigMenu::advancedMenu() {
     while (true) {
         std::vector<Option> localOptions = {
+#ifndef BRUCE_TEMBED_BASE
             {"Set Device pins", [this]() { pinsMenu(); }           },
+#endif
 #if !defined(LITE_VERSION)
             {"Toggle BLE API",  [this]() { enableBLEAPI(); }       },
             {"BadUSB/BLE",      [this]() { setBadUSBBLEMenu(); }   },
@@ -311,8 +377,6 @@ void ConfigMenu::pinsMenu() {
             {"GPS Pins",       [this]() { setUARTPinsMenu(bruceConfigPins.gps_bus); }  },
             //{"Serial use USB",  [this]() { switchToUSBSerial(); }                       },
             //{"Serial use UART", [this]() { switchToUARTSerial(); }                      },
-#else
-            {"I2C Pins", [this]() { setI2CPinsMenu(bruceConfigPins.i2c_bus); }},
 #endif
             {"Back",           []() {}                                                 },
         };

@@ -247,7 +247,11 @@ void rf_raw_record_create(RawRecording &recorded, bool &returnToMenu) {
     } else status.frequency = bruceConfigPins.rfFreq;
 
     // Something went wrong with scan, probably it was cancelled
-    if (status.frequency < 300) return;
+    if (status.frequency < 300) {
+        deinitRfModule();
+        returnToMenu = true;
+        return;
+    }
     recorded.frequency = status.frequency;
     setMHZ(status.frequency);
 
@@ -310,10 +314,15 @@ void rf_raw_record_create(RawRecording &recorded, bool &returnToMenu) {
 
     rmt_channel_handle_t rx_ch = NULL;
     rx_ch = setup_rf_rx();
-    if (rx_ch == NULL) return;
+    if (rx_ch == NULL) { deinitRfModule(); return; }
     ESP_LOGI("RMT_SPECTRUM", "register RX done callback");
     QueueHandle_t receive_queue = xQueueCreate(1, sizeof(rmt_rx_done_event_data_t));
-    assert(receive_queue);
+    if (!receive_queue) {
+        rmt_del_channel(rx_ch);
+        deinitRfModule();
+        displayError("Capture memory full");
+        return;
+    }
     rmt_rx_event_callbacks_t cbs = {
         .on_recv_done = record_rmt_rx_done_callback,
     };
@@ -398,7 +407,6 @@ int rf_raw_record_options(bool saved) {
 }
 
 void rf_raw_record() {
-    bool replaying = false;
     bool returnToMenu = false;
     bool saved = false;
     int option = 3;
@@ -407,15 +415,10 @@ void rf_raw_record() {
         if (option == 1) { // Replay
             rf_raw_emit(recorded, returnToMenu);
         } else if (option == 2) { // Save
-            saved = true;
-            rf_raw_save(recorded);
+            saved = rf_raw_save(recorded);
         } else if (option == 3) { // Discard
             saved = false;
-            for (auto &code : recorded.codes) free(code);
-            recorded.codes.clear();
-            recorded.codeLengths.clear();
-            recorded.gaps.clear();
-            recorded.frequency = 0;
+            recorded.clear();
             rf_raw_record_create(recorded, returnToMenu);
         }
 
@@ -423,10 +426,5 @@ void rf_raw_record() {
         option = rf_raw_record_options(saved);
         vTaskDelay(pdMS_TO_TICKS(1));
     }
-    for (auto &code : recorded.codes) free(code);
-    recorded.codes.clear();
-    recorded.codeLengths.clear();
-    recorded.gaps.clear();
-    recorded.frequency = 0;
     return;
 }

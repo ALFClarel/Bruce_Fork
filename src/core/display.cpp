@@ -589,7 +589,12 @@ int loopOptions(
                 renderedByLambda = options[index].hover(options[index].hoverPointer, true);
 
             if (!renderedByLambda) {
+#ifdef BRUCE_TEMBED_BASE
+                if (menuType == MENU_TYPE_SUBMENU || menuType == MENU_TYPE_MAIN)
+                    drawSubmenu(index, options, subText);
+#else
                 if (menuType == MENU_TYPE_SUBMENU) drawSubmenu(index, options, subText);
+#endif
                 else
                     coord = drawOptions(
                         index,

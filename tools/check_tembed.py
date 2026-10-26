@@ -27,3 +27,15 @@ assert not any('LITE_VERSION' in flag or 'DISABLE_INTERPRETER' in flag for flag 
 for name in ['RF24', 'Si4713', 'TinyGPS', 'OneWire', 'RadioLib', 'Chameleon', 'Amiibolink', 'MFRC522']:
     assert not any(name in dep for dep in env['lib_deps']), f'Unsupported dependency: {name}'
 print(f'PASS: policy boundaries, {count} compiled-out sources, native micMenu, target configuration')
+
+# Execute production ownership/storage code against actual failure scenarios.
+subprocess.run(['g++', '-std=c++17', '-Wall', '-Wextra', '-Werror',
+                '-fsanitize=address,undefined', '-fno-omit-frame-pointer', '-g', '-Iinclude',
+                'tests/tembed/storage_test.cpp', '-o', '/tmp/bruce-tembed-storage'], cwd=root, check=True)
+subprocess.run(['/tmp/bruce-tembed-storage'], check=True)
+for dep in env['lib_deps']:
+    if 'https://' in dep:
+        assert re.search(r'#[0-9a-f]{40}$', dep), f'Unpinned Git dependency: {dep}'
+    elif dep != 'FFat':
+        assert re.search(r'@\s*\d+\.\d+\.\d+$', dep), f'Unpinned package: {dep}'
+print('PASS: capture cancellation cleanup, partial writes, flush/read/rename failures, dependency pins')

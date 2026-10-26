@@ -29,11 +29,25 @@ static int meterLevel() {
 }
 #endif
 
+#ifdef BRUCE_TEMBED_BASE
+static std::atomic<bool> isPreviewLed{false};
+static std::atomic<uint32_t> previewLedColor{0};
+static std::atomic<int> previewLedEffect{0}, previewLedEffectSpeed{1}, previewLedEffectDirection{1};
+static std::atomic<uint32_t> configuredColor{0};
+static std::atomic<int> configuredEffect{0}, configuredSpeed{1}, configuredDirection{1};
+static std::atomic<int> requestedLedBrightness{0};
+static std::atomic<uint32_t> blinkUntil{0};
+static std::atomic<bool> ledTaskStarted{false};
+static uint32_t packLedColor(const CRGB &color) {
+    return (uint32_t(color.r) << 16) | (uint32_t(color.g) << 8) | color.b;
+}
+#else
 bool isPreviewLed = false;
 CRGB previewLedColor;
 int previewLedEffect;
 int previewLedEffectSpeed;
 int previewLedEffectDirection;
+#endif
 
 CRGB hsvToRgb(uint16_t h, uint8_t s, uint8_t v) {
     uint8_t f = (h % 60) * 255 / 60;
@@ -102,48 +116,64 @@ void ledEffectTask(void *pvParameters) {
     int frame = 0;
     uint64_t start_time = esp_timer_get_time() / 1000;
 #ifdef BRUCE_TEMBED_BASE
-    int lastMeter = -1;
+#ifdef RGB_LED_CLK
+    FastLED.addLeds<LED_TYPE, RGB_LED, RGB_LED_CLK, LED_ORDER>(leds, LED_COUNT);
+#else
+    FastLED.addLeds<LED_TYPE, RGB_LED, LED_ORDER>(leds, LED_COUNT);
+#endif
+    int lastMeter = -2;
+    int lastEffect = -1, lastBrightness = -1;
     CRGB lastSolid = CRGB::Black;
 #endif
     while (1) {
-        CRGB baseColor = isPreviewLed ? previewLedColor : bruceConfig.ledColor;
-        int ledEffect = isPreviewLed ? previewLedEffect : bruceConfig.ledEffect;
-        int ledEffectSpeed = isPreviewLed ? previewLedEffectSpeed : bruceConfig.ledEffectSpeed;
-        int ledEffectDirection = isPreviewLed ? previewLedEffectDirection : bruceConfig.ledEffectDirection;
-
 #ifdef BRUCE_TEMBED_BASE
+        const bool preview = isPreviewLed.load();
+        CRGB baseColor(preview ? previewLedColor.load() : configuredColor.load());
+        int ledEffect = preview ? previewLedEffect.load() : configuredEffect.load();
+        int ledEffectSpeed = preview ? previewLedEffectSpeed.load() : configuredSpeed.load();
+        int ledEffectDirection = preview ? previewLedEffectDirection.load() : configuredDirection.load();
         int level = meterLevel();
+        int brightness = requestedLedBrightness.load() * 255 / 100;
+        uint32_t blinkEnd = blinkUntil.load();
+        if (level >= 0) brightness = min(64, brightness);
+        else if (blinkEnd && int32_t(blinkEnd - millis()) > 0)
+            brightness = brightness ? 0 : 127;
+        bool dirty = brightness != lastBrightness;
+        if (dirty) {
+            FastLED.setBrightness(brightness);
+            lastBrightness = brightness;
+        }
         if (level >= 0) {
-            if (level != lastMeter) {
+            if (dirty || level != lastMeter) {
                 int count = (level * LED_COUNT + 99) / 100;
-                uint8_t brightness = uint8_t(min(64, (bruceConfig.ledBright * 255 / 100)));
-                FastLED.setBrightness(brightness);
-                for (int i = 0; i < LED_COUNT; ++i) {
+                for (int i = 0; i < LED_COUNT; ++i)
                     leds[i] = i < count ? hsvToRgb(120 - i * 120 / (LED_COUNT - 1), 255,
                                                   32 + level * 223 / 100) : CRGB::Black;
-                }
                 FastLED.show();
-                lastMeter = level;
             }
-            vTaskDelay(pdMS_TO_TICKS(50));
+            lastMeter = level;
+            lastEffect = -1; // always repaint when returning to the decorative effect
+            vTaskDelay(pdMS_TO_TICKS(20));
             continue;
         }
-        if (lastMeter >= 0) {
-            FastLED.setBrightness(bruceConfig.ledBright * 255 / 100);
-            fill_solid(leds, LED_COUNT, baseColor);
-            FastLED.show();
-            lastMeter = -1;
-            lastSolid = baseColor;
-        }
         if (ledEffect == LED_EFFECT_SOLID) {
-            if (baseColor != lastSolid) {
+            if (dirty || lastMeter != -1 || lastEffect != ledEffect || baseColor != lastSolid) {
                 fill_solid(leds, LED_COUNT, baseColor);
                 FastLED.show();
                 lastSolid = baseColor;
             }
-            vTaskDelay(pdMS_TO_TICKS(50));
+            lastMeter = -1;
+            lastEffect = ledEffect;
+            vTaskDelay(pdMS_TO_TICKS(20));
             continue;
         }
+        lastMeter = -1;
+        lastEffect = ledEffect;
+#else
+        CRGB baseColor = isPreviewLed ? previewLedColor : bruceConfig.ledColor;
+        int ledEffect = isPreviewLed ? previewLedEffect : bruceConfig.ledEffect;
+        int ledEffectSpeed = isPreviewLed ? previewLedEffectSpeed : bruceConfig.ledEffectSpeed;
+        int ledEffectDirection = isPreviewLed ? previewLedEffectDirection : bruceConfig.ledEffectDirection;
 #endif
         if (ledEffect == LED_EFFECT_COLOR_CYCLE || ledEffect == LED_EFFECT_COLOR_WHEEL) {
             short delayMs = 50;
@@ -346,10 +376,9 @@ void ledEffectTask(void *pvParameters) {
 
 void beginLed() {
 #ifdef BRUCE_TEMBED_BASE
-    static bool initialized = false;
-    if (initialized) return;
-    initialized = true;
-#endif
+    ledSetup();
+    return;
+#else
 #ifdef RGB_LED_CLK
     FastLED.addLeds<LED_TYPE, RGB_LED, RGB_LED_CLK, LED_ORDER>(leds, LED_COUNT);
 #else
@@ -397,12 +426,17 @@ void beginLed() {
     ledSetup();
 
     setLedBrightness(bruceConfig.ledBright);
+#endif
 }
 
 void blinkLed(int blinkTime) {
 #ifdef BRUCE_TEMBED_BASE
-    if (meterLevel() >= 0) return;
-#endif
+    if (bruceConfig.ledBlinkEnabled && meterLevel() < 0) {
+        beginLed();
+        blinkUntil.store(millis() + uint32_t(constrain(blinkTime, 1, 1000)));
+    }
+    return;
+#else
     if (!bruceConfig.ledBlinkEnabled) return;
 
     int ledBrightFrom = bruceConfig.ledBright;
@@ -414,11 +448,19 @@ void blinkLed(int blinkTime) {
     delay(blinkTime);
     setLedBrightness(ledBrightFrom);
     ioExpander.turnPinOnOff(IO_EXP_VIBRO, LOW);
+#endif
 }
 
 void setLedColor(CRGB color) {
+#ifdef BRUCE_TEMBED_BASE
+    if (isPreviewLed.load()) previewLedColor.store(packLedColor(color));
+    else configuredColor.store(packLedColor(color));
+    return;
+#else
     if (isPreviewLed && previewLedEffect != LED_EFFECT_SOLID) {
+#ifndef BRUCE_TEMBED_BASE
         previewLedColor = color;
+#endif
 #ifdef HAS_ENCODER_LED
         EncoderLedChange = 1;
 #endif
@@ -426,6 +468,7 @@ void setLedColor(CRGB color) {
         for (int i = 0; i < LED_COUNT; i++) leds[i] = color;
         FastLED.show();
     }
+#endif
 }
 
 void setLedEffect(int effect) {
@@ -436,10 +479,15 @@ void setLedEffect(int effect) {
 }
 
 void setLedBrightness(int value) {
+#ifdef BRUCE_TEMBED_BASE
+    requestedLedBrightness.store(constrain(value, 0, 100));
+    return;
+#else
     value = max(0, min(100, value));
     int bright = 255 * value / 100;
     FastLED.setBrightness(bright);
     FastLED.show();
+#endif
 }
 
 #define BrucePurple 9830500 // Custom purple color for Bruce
@@ -538,7 +586,11 @@ void setCustomColorSettingMenu(int rgb, std::function<uint32_t(uint32_t, int)> c
     static auto hoverFunction = [](void *pointer, bool shouldRender) -> bool {
         uint32_t colorToSet = *static_cast<uint32_t *>(pointer);
         setLedColor(colorToSet);
+#ifdef BRUCE_TEMBED_BASE
+        previewLedColor.store(colorToSet);
+#else
         previewLedColor = CRGB(colorToSet);
+#endif
         return false;
     };
 
@@ -788,20 +840,31 @@ void setLedEffectDirectionConfig() {
 
 void ledSetup() {
 #ifdef BRUCE_TEMBED_BASE
-    ledEffects(true); // Existing task handles meters and decorative effects; never create a second task.
+    configuredColor.store(bruceConfig.ledColor);
+    configuredEffect.store(bruceConfig.ledEffect);
+    configuredSpeed.store(bruceConfig.ledEffectSpeed);
+    configuredDirection.store(bruceConfig.ledEffectDirection);
+    requestedLedBrightness.store(bruceConfig.ledBright);
+    ledEffects(true);
     return;
-#endif
+#else
     if (bruceConfig.ledEffect == LED_EFFECT_SOLID) { ledEffects(false); }
 
     if (bruceConfig.ledEffect > LED_EFFECT_SOLID) {
         ledEffects(true);
     } else setLedColor(bruceConfig.ledColor);
+#endif
 }
 
 void ledEffects(bool enable) {
 #ifdef BRUCE_TEMBED_BASE
-    enable = true; // keep sample consumer alive even when decorative effects are disabled
-#endif
+    bool expected = false;
+    if (ledTaskStarted.compare_exchange_strong(expected, true)) {
+        if (xTaskCreate(ledEffectTask, "LedEffect", 2048, NULL, 1, &ledEffectTaskHandle) != pdPASS)
+            ledTaskStarted.store(false);
+    }
+    return;
+#else
     if (enable) {
         if (ledEffectTaskHandle == NULL) {
             xTaskCreate(ledEffectTask, "LedEffect", 2048, NULL, 1, &ledEffectTaskHandle);
@@ -812,16 +875,19 @@ void ledEffects(bool enable) {
             ledEffectTaskHandle = NULL;
         }
     }
+#endif
 }
 
 void ledPreviewMode(bool enable) {
-    isPreviewLed = enable;
+    isPreviewLed = false;
     if (enable) {
         previewLedColor = bruceConfig.ledColor;
         previewLedEffect = bruceConfig.ledEffect;
         previewLedEffectSpeed = bruceConfig.ledEffectSpeed;
         previewLedEffectDirection = bruceConfig.ledEffectDirection;
     }
+    isPreviewLed = enable;
+    ledSetup();
     ledEffects(enable);
 }
 

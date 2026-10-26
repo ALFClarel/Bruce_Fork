@@ -86,9 +86,14 @@ les buffers de réception RMT/DMA restent internes.
 La fonction radio d'origine reste disponible par ses chemins existants, dont le
 gestionnaire SD et les commandes/JS lorsqu'ils sont compatibles. Les nouveaux modes
 ne dupliquent pas leurs moteurs. L'interface principale utilise la liste existante.
-Les sous-menus complexes amont et le sélecteur micro restent présents : **la limite
-absolue à deux niveaux n'est pas entièrement réalisée**, pour préserver les flux
-natifs plutôt que recréer les mêmes fonctions.
+La navigation du profil base expose directement les réglages RF/IR/NFC, les outils
+micro/HID et les transferts de fichiers dans leur catégorie. Config ne contient plus
+les groupes Display/System/Advanced/Power ni le réglage des broches fixes. Les réglages
+Wi-Fi ne passent plus par Config → Evil Wifi Settings. Le menu racine utilise la liste
+existante sans rendu d'icône au survol et conserve les contrôles batterie/redémarrage.
+Les sélecteurs de valeurs, navigateurs de fichiers et écrans internes aux applications
+natives (dont BLE Suite) restent des étapes de leurs outils, pas des catégories ajoutées.
+`micMenu()` reste identique au code amont ; ses deux outils sont exposés directement.
 
 ## Mesures et validation
 
@@ -169,8 +174,11 @@ plus tard ; aucun VPS n'est configuré ou modifié ici.
   contre une chute de tension brutale. Le gouverneur ne coupe pas une capture,
   une session WebUI/OTA ou le Wi-Fi actif pour simuler une économie.
 - BadUSB, BLE clavier/spam, réseau, SD, JS et OTA doivent subir un essai matériel.
-- Les dépendances Git amont restantes suivent parfois des branches mobiles ;
-  un verrouillage complet de tous les SHA reste une amélioration de reproductibilité.
+- Le profil cible fixe toutes les bibliothèques Git à leur SHA complet et les paquets
+  du registre à leur version exacte, y compris AsyncTCP. FFat vient du framework fixé.
+  `tools/check_tembed.py` refuse les dépendances cibles non figées. Cela empêche la
+  dérive des bibliothèques ; ce n'est pas une garantie de binaires identiques octet
+  pour octet (horodatages et génération des ressources web amont restent présents).
 
 ### Commits des fonctionnalités
 
@@ -182,3 +190,25 @@ plus tard ; aucun VPS n'est configuré ou modifié ici.
 | D | [Gouverneur batterie](https://github.com/ALFClarel/Bruce_Fork/commit/db37744f10add563b2cc3890edcffefda2e73ed4) |
 | E | [Pont NFC](https://github.com/ALFClarel/Bruce_Fork/commit/1cab23cd979ed3723fdeb26d45b5dc92c311cdca) |
 | F | [Annotations et QR](https://github.com/ALFClarel/Bruce_Fork/commit/18d216e7853f95181b23bcccac04bedc1fa6cb97) |
+
+## Corrections de robustesse — 26 octobre 2026
+
+- Les copies de captures RAW ont un propriétaire RAII non copiable. Retour, annulation,
+  nouvelle capture et sortie normale libèrent tous les buffers. La sauvegarde reçoit
+  une référence constante ; elle ne fait plus de copie superficielle des pointeurs.
+- Le statut « saved » est le résultat réel de la sauvegarde. Les écritures sont faites
+  dans un fichier `.part`, leur longueur et l'erreur du flux sont contrôlées après
+  flush puis relecture. Le fichier définitif n'est publié que par un renommage réussi.
+  Une erreur supprime le fichier partiel, préserve la capture en RAM et permet de réessayer.
+  Une coupure électrique peut laisser un `.part` ; il n'est jamais annoncé comme sauvegardé.
+- La tâche LED est seule à initialiser FastLED, modifier le tableau et appeler show.
+  Couleurs, luminosité, aperçus et clignotements passent par des commandes atomiques.
+  La sortie d'une animation ou d'un indicateur force le rafraîchissement du mode fixe.
+- Les erreurs d'allocation de la file RMT et l'annulation du balayage nettoient aussi
+  la radio. Le menu racine conserve son type MAIN tout en affichant une liste.
+- Les tests hôtes exécutent les helpers de production : 1 000 annulations avec suivi
+  exact des allocations, chaque position de coupure d'écriture, erreur de flush,
+  réouverture, renommage et protection d'une capture existante ; ASan/UBSan en CI.
+
+La compilation ESP32 et la comparaison des tailles de cette révision sont à consulter
+dans la CI du commit correspondant. Les essais matériels restent nécessaires.

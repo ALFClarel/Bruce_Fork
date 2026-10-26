@@ -67,7 +67,11 @@ void RFIDMenu::optionsMenu() {
 #endif
 #endif
 #endif
+#ifdef BRUCE_TEMBED_BASE
+    options.push_back({"Add MIF Key", addMifareKeyMenu});
+#else
     options.push_back({"Config", [this]() { configMenu(); }});
+#endif
 
 #if !defined(REMOVE_RFID_HW_INTERFACE)
 #ifndef LITE_VERSION

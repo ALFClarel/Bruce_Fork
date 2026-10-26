@@ -19,7 +19,11 @@ void IRMenu::optionsMenu() {
 #if !defined(LITE_VERSION)
         {"IR Jammer", startIrJammer             }, // Simple frequency-adjustable jammer
 #endif
+#ifdef BRUCE_TEMBED_BASE
+        {"TX Repeats", setIrTxRepeats},
+#else
         {"Config",    [this]() { configMenu(); }},
+#endif
     };
     addOptionToMainMenu();
 
@@ -34,8 +38,10 @@ void IRMenu::optionsMenu() {
 
 void IRMenu::configMenu() {
     options = {
+#ifndef BRUCE_TEMBED_BASE
         {"Ir TX Pin", lambdaHelper(gsetIrTxPin, true)},
         {"Ir RX Pin", lambdaHelper(gsetIrRxPin, true)},
+#endif
         {"Ir TX Repeats", setIrTxRepeats},
         {"Back", [this]() { optionsMenu(); }},
     };

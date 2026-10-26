@@ -1,0 +1,11 @@
+{
+  "sayacom/WireGuard-ESP32-Arduino": "90aa6b43965c9718d62e59ddd709f856722f8e0b",
+  "bmorcelli/IRremoteESP8266": "22cd38c653c4bdc61c1e7dad18affe58e5915177",
+  "emericklaw/Adafruit-BusIO_Bruce": "27230c1ddbb3983e1bd5abc025fcc84f6a8c2c5e",
+  "emericklaw/Adafruit-PN532_Bruce": "e91d69575fa6a6052bff779885a1c616825fc0af",
+  "huckor/BER-TLV": "bd61b70eaa360779605b10f0641bcf01d00bee76",
+  "rennancockles/SimpleCLI": "b23d377935c80cc5a9214bcf24e1f1cf68debc6a",
+  "bmorcelli/SmartRC-CC1101-Driver-Lib": "7bba5217dc0632f718a3278dc27e401016741a95",
+  "BruceDevices/mquickjs": "169b5ea7723bf43d7be9631a14f9c2a1ed8c69e1",
+  "bmorcelli/ESP32-PsRamFS": "5ace2e66c10d5647f10f48b22a79d9b12a73db7b"
+}

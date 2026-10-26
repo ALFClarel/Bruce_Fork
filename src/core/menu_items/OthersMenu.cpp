@@ -20,12 +20,26 @@ void OthersMenu::optionsMenu() {
         {"Megalodon",    shark_setup                  },
 
 #if defined(MIC_SPM1423) || defined(MIC_INMP441)
-        {"Microphone",   [this]() { micMenu(); }      }, //@deveclipse
+#ifdef BRUCE_TEMBED_BASE
+        {"Mic Spectrum", mic_test},
+        {"Mic Record", mic_record_app},
+#else
+        {"Microphone",   [this]() { micMenu(); }      },
+#endif //@deveclipse
 #endif
 
 // New consolidated BadUSB & HID submenu
 #if !defined(LITE_VERSION)
+#ifdef BRUCE_TEMBED_BASE
+        {"BadUSB", []() { ducky_setup(hid_usb, false); }},
+        {"USB Keyboard", []() { ducky_keyboard(hid_usb, false); }},
+#ifdef USB_as_HID
+        {"USB Clicker", clicker_setup},
+        {"USB U2F", u2f_setup},
+#endif
+#else
         {"BadUSB & HID", [this]() { badUsbHidMenu(); }},
+#endif
 #endif
 
 #ifndef LITE_VERSION

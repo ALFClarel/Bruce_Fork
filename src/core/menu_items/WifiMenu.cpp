@@ -95,7 +95,26 @@ void WifiMenu::optionsMenu() {
     options.push_back({"WiFi Pass Recovery", wifi_recover_menu});
 #endif
 
+#ifdef BRUCE_TEMBED_BASE
+    options.push_back({"Change MAC", wifiMACMenu});
+    options.push_back({"Add Evil Wifi", addEvilWifiMenu});
+    options.push_back({"Remove Evil Wifi", removeEvilWifiMenu});
+    options.push_back({"Set Gateway IP", setEvilGatewayIp});
+    options.push_back({"Password Mode", setEvilPasswordMode});
+    options.push_back({"Rename /creds", setEvilEndpointCreds});
+    options.push_back({"Allow /creds access", setEvilAllowGetCreds});
+    options.push_back({"Rename /ssid", setEvilEndpointSsid});
+    options.push_back({"Allow /ssid access", setEvilAllowSetSsid});
+    options.push_back({"Display endpoints", setEvilAllowEndpointDisplay});
+    options.push_back({bruceConfig.TerminalLog ? "SSH/Telnet Log OFF" : "SSH/Telnet Log ON", []() {
+        bruceConfig.setTerminalLog(!bruceConfig.TerminalLog);
+    }});
+    options.push_back({String("Hidden Networks: ") + (showHiddenNetworks ? "ON" : "OFF"), []() {
+        showHiddenNetworks = !showHiddenNetworks;
+    }});
+#else
     options.push_back({"Config", [this]() { configMenu(); }});
+#endif
 
     addOptionToMainMenu();
 

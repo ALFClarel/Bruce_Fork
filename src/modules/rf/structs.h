@@ -5,12 +5,8 @@
 #include <driver/rmt_rx.h>
 #include <driver/rmt_tx.h>
 
-struct RawRecording {
-    float frequency;
-    std::vector<rmt_symbol_word_t *> codes;
-    std::vector<uint16_t> codeLengths;
-    std::vector<uint16_t> gaps;
-};
+#include <raw_recording.h>
+using RawRecording = OwnedRawRecording<rmt_symbol_word_t>;
 
 struct RawRecordingStatus {
     float frequency = 0.f;

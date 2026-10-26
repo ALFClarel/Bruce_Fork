@@ -53,6 +53,9 @@ void MainMenu::begin(void) {
     for (int i = 0; i < _totalItems; i++) {
         String itemName = _menuItems[i]->getName();
         if (find(l.begin(), l.end(), itemName) == l.end()) { // If menu item is not disabled
+#ifdef BRUCE_TEMBED_BASE
+            options.push_back({itemName, [this, i]() { _menuItems[i]->optionsMenu(); }});
+#else
             options.push_back(
                 {// selected lambda
                  itemName,
@@ -74,10 +77,11 @@ void MainMenu::begin(void) {
                  _menuItems[i]
                 }
             );
+#endif
         }
     }
 #ifdef BRUCE_TEMBED_BASE
-    _currentIndex = loopOptions(options, MENU_TYPE_SUBMENU, "Bruce", _currentIndex);
+    _currentIndex = loopOptions(options, MENU_TYPE_MAIN, "Bruce", _currentIndex);
 #else
     _currentIndex = loopOptions(options, MENU_TYPE_MAIN, "Main Menu", _currentIndex);
 #endif

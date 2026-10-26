@@ -33,7 +33,11 @@ void RFMenu::optionsMenu() {
         {"Bruteforce",      rf_bruteforce             }, // dev_eclipse
         {"Jammer",          [=]() { RFJammer(true); } },
 #endif
+#ifdef BRUCE_TEMBED_BASE
+        {"RF Frequency", setRFFreqMenu},
+#else
         {"Config",          [this]() { configMenu(); }},
+#endif
     };
     addOptionToMainMenu();
 
