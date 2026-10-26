@@ -113,15 +113,15 @@ ces durées. Le temps de démarrage et la consommation doivent être mesurés su
 
 ### Résultat validé — 26 octobre 2026
 
-[Build et contrôle de taille réussis](https://github.com/ALFClarel/Bruce_Fork/actions/runs/40300782923),
-firmware au commit `35ba51bdbc6d76db7d87471d9fde96e25812234d`.
+[Build et contrôle de taille réussis](https://github.com/ALFClarel/Bruce_Fork/actions/runs/40312945898),
+firmware au commit `023cfdffc26ca37f4f3bb160179190fa005319c8`.
 
 | Mesure | Référence | Fork | Gain |
 |---|---:|---:|---:|
-| Application .bin | 4 200 960 octets | 3 726 288 octets | **474 672 octets, soit 11,3 %** |
-| DRAM statique (.data/.bss/.noinit) | 121 904 octets | 120 860 octets | **1 044 octets** |
+| Application .bin | 4 200 960 octets | 3 713 264 octets | **487 696 octets, soit 11,6 %** |
+| DRAM statique (.data/.bss/.noinit) | 121 904 octets | 120 892 octets | **1 012 octets** |
 | IRAM | 110 336 octets | 108 800 octets | **1 536 octets** |
-| Commande PlatformIO, ces deux exécutions | 514,50 s | 352,66 s | 161,84 s observées |
+| Commande PlatformIO, ces deux exécutions | 345,57 s | 352,23 s | Fork plus long de 6,66 s |
 
 La différence de durée inclut l'effet des dépendances, des téléchargements et du
 cache ; elle ne constitue pas un benchmark isolé du compilateur. Le démarrage,
@@ -210,5 +210,9 @@ plus tard ; aucun VPS n'est configuré ou modifié ici.
   exact des allocations, chaque position de coupure d'écriture, erreur de flush,
   réouverture, renommage et protection d'une capture existante ; ASan/UBSan en CI.
 
-La compilation ESP32 et la comparaison des tailles de cette révision sont à consulter
-dans la CI du commit correspondant. Les essais matériels restent nécessaires.
+La [CI de cette correction](https://github.com/ALFClarel/Bruce_Fork/actions/runs/40312945898)
+a réussi : tests hôtes avec ASan/UBSan, compilations ESP32 référence et fork, images
+fusionnée/OTA, et contrôle de taille. Le binaire diminue encore de 13 024 octets par
+rapport au premier fork validé ; sa DRAM statique augmente de 32 octets par rapport
+à ce premier fork et reste inférieure de 1 012 octets à la référence amont.
+Les essais matériels restent nécessaires.
