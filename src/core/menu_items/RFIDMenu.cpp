@@ -27,6 +27,9 @@ void RFIDMenu::optionsMenu() {
     options = {
 #if !defined(REMOVE_RFID_HW_INTERFACE)  // Remove Hardware interface menu due to lack of external GPIO
         {"Read tag",    [=]() { TagOMatic(); }                     },
+#ifdef BRUCE_TEMBED_BASE
+        {"NFC -> RF / IR", []() { TagOMatic(TagOMatic::BRIDGE_MODE); }},
+#endif
 #ifndef LITE_VERSION
         {"Read EMV",    [=]() { EMVReader(); }                     },
 #if !defined(BRUCE_NO_LF_RFID)

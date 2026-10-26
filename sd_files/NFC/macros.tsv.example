@@ -1,0 +1,5 @@
+# Install as /BruceNFC/macros.tsv on SD. Replace UID and paths with your captures.
+# One execution per tag presentation, only inside NFC -> RF / IR.
+# UID\tsub|ir\t/absolute/path
+04AABBCCDDEEFF	sub	/BruceRF/example.sub
+04112233445566	ir	/BruceIR/example.ir

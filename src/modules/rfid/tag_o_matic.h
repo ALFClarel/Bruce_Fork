@@ -26,7 +26,10 @@ public:
         EMULATE_NDEF_MODE,
         ERASE_MODE,
         LOAD_MODE,
-        SAVE_MODE
+        SAVE_MODE,
+#ifdef BRUCE_TEMBED_BASE
+        BRIDGE_MODE
+#endif
     };
 
     /////////////////////////////////////////////////////////////////////////////////////
@@ -60,6 +63,10 @@ private:
     RFIDInterface *_rfid;
     RFID_State _initial_state;
     bool _read_uid = false;
+#ifdef BRUCE_TEMBED_BASE
+    bool _bridgeMode = false;
+    String _bridgeUID;
+#endif
     bool _ndef_created = false;
     uint32_t _lastReadTime = 0;
     RFID_State current_state;

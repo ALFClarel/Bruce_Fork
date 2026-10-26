@@ -1,3 +1,4 @@
+#include "nfc_macro.h"
 #include "core/led_control.h"
 /**
  * @file tag_o_matic.cpp
@@ -93,7 +94,16 @@ void TagOMatic::setup() {
         return;
     }
 
+#ifdef BRUCE_TEMBED_BASE
+    _bridgeMode = _initial_state == BRIDGE_MODE;
+    if (_bridgeMode && !setupSdCard()) {
+        displayError("NFC macros require SD", true);
+        return;
+    }
+    set_state(_bridgeMode ? READ_MODE : _initial_state);
+#else
     set_state(_initial_state);
+#endif
     return loop();
 }
 
@@ -105,7 +115,12 @@ void TagOMatic::loop() {
             break;
         }
 
-        if (check(SelPress)) { select_state(); }
+        if (check(SelPress)) {
+#ifdef BRUCE_TEMBED_BASE
+            if (!_bridgeMode)
+#endif
+                select_state();
+        }
 
         switch (current_state) {
             case READ_MODE: read_card(); break;
@@ -216,7 +231,11 @@ void TagOMatic::set_state(RFID_State state) {
 }
 
 void TagOMatic::display_banner() {
+#ifdef BRUCE_TEMBED_BASE
+    drawMainBorderWithTitle(_bridgeMode ? "NFC -> RF / IR" : "TAG-O-MATIC");
+#else
     drawMainBorderWithTitle("TAG-O-MATIC");
+#endif
 
     switch (current_state) {
         case READ_MODE: printSubtitle("READ MODE"); break;
@@ -316,7 +335,9 @@ void TagOMatic::show_not_implemented_card() {
 
 void TagOMatic::read_card() {
     if (millis() - _lastReadTime < 2000) return;
-
+#ifdef BRUCE_TEMBED_BASE
+    if (_bridgeMode) _lastReadTime = millis();
+#endif
     int readStatus = _rfid->read();
     if (readStatus != RFIDInterface::SUCCESS) {
         if (readStatus == RFIDInterface::NOT_IMPLEMENTED) {
@@ -329,7 +350,12 @@ void TagOMatic::read_card() {
                 show_not_implemented_card();
                 return;
             }
-            if (readStatus != RFIDInterface::SUCCESS) return;
+            if (readStatus != RFIDInterface::SUCCESS) {
+#ifdef BRUCE_TEMBED_BASE
+                if (_bridgeMode && readStatus == RFIDInterface::TAG_NOT_PRESENT) _bridgeUID = "";
+#endif
+                return;
+            }
         } else {
             return;
         }
@@ -342,6 +368,12 @@ void TagOMatic::read_card() {
     dump_card_details();
 
     signalMeter(100, 0, 100); // binary tag-read success; PN532 exposes no RSSI
+#ifdef BRUCE_TEMBED_BASE
+    if (_bridgeMode && _bridgeUID != _rfid->printableUID.uid) {
+        _bridgeUID = _rfid->printableUID.uid; // edge trigger: remove tag before rearming same UID
+        dispatchNfcMacro(_bridgeUID);
+    }
+#endif
     _read_uid = true;
     _lastReadTime = millis();
     delayWithReturn(500);
